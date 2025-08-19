@@ -1,10 +1,10 @@
 const CACHE_NAME = 'inventory-app-cache-v1';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/script.js',
-    '/style.css',
-    '/manifest.json',
+    '/InventarioAPP/',
+    '/InventarioAPP/index.html',
+    '/InventarioAPP/script.js',
+    '/InventarioAPP/style.css',
+    '/InventarioAPP/manifest.json',
     'https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css',
     'https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css',
     'https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js',

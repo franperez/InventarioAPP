@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Register service worker for PWA
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
+    navigator.serviceWorker.register('/InventarioAPP/service-worker.js')
         .then(registration => console.log('SW registered'))
         .catch(error => console.log('SW registration failed'));
 }
