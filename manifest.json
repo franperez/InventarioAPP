@@ -1,0 +1,21 @@
+{
+    "name": "Inventario App",
+    "short_name": "Inventario",
+    "description": "Aplicación de gestión de inventario",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#007bff",
+    "icons": [
+        {
+            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiBmaWxsPSIjMDA3YmZmIiByeD0iMjQiLz4KPHBhdGggZD0iTTQ4IDY0SDE0NFY4MEg0OFY2NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00OCA5NkgxNDRWMTEySDQ4Vjk2WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTQ4IDEyOEgxNDRWMTQ0SDQ4VjEyOFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=",
+            "sizes": "192x192",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSIjMDA3YmZmIiByeD0iNjQiLz4KPHBhdGggZD0iTTEyOCAxNzBIMzg0VjIxNEgxMjhWMTcwWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTEyOCAyNTZIMzg0VjMwMEgxMjhWMjU2WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTEyOCAzNDJIMzg0VjM4NkgxMjhWMzQyWiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==",
+            "sizes": "512x512",
+            "type": "image/svg+xml"
+        }
+    ]
+}

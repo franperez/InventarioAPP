@@ -1,0 +1,142 @@
+.navbar-brand {
+    font-weight: bold;
+}
+
+.location-tab {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-bottom: none;
+    padding: 10px 15px;
+    margin-right: 5px;
+    cursor: pointer;
+    border-radius: 10px 10px 0 0;
+}
+
+.location-tab.active {
+    background: white;
+    border-bottom: 1px solid white;
+    position: relative;
+    z-index: 1;
+}
+
+.inventory-container {
+    border: 1px solid #dee2e6;
+    border-top: none;
+    background: white;
+    min-height: 400px;
+    padding: 20px;
+}
+
+.item-row {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 15px;
+    cursor: move;
+}
+
+.item-row:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.item-row.locked {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.quantity-controls button {
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    font-size: 12px;
+}
+
+.quantity-controls input {
+    width: 80px;
+    text-align: center;
+}
+
+.uom-label {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.drag-handle {
+    color: #6c757d;
+    cursor: move;
+}
+
+.locked .drag-handle {
+    color: #dc3545;
+}
+
+.offcanvas-header {
+    background: #007bff;
+    color: white;
+}
+
+.location-item {
+    padding: 10px;
+    border-bottom: 1px solid #dee2e6;
+    cursor: pointer;
+}
+
+.location-item:hover {
+    background: #f8f9fa;
+}
+
+.totalization-section {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.total-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 15px;
+}
+
+@media (max-width: 768px) {
+    .quantity-controls {
+        flex-direction: column;
+        gap: 3px;
+    }
+    
+    .quantity-controls .btn-group {
+        width: 100%;
+    }
+    
+    .quantity-controls input {
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    .item-row {
+        padding: 10px;
+    }
+    
+    .location-tab {
+        font-size: 12px;
+        padding: 8px 10px;
+    }
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+}
+
+.sortable-chosen {
+    background: #e3f2fd !important;
+}
