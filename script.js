@@ -276,8 +276,8 @@ function renderItems(locationName) {
                     <i class="bi bi-grip-vertical drag-handle"></i>
                 </div>
                 <div class="col-md-4 col-12">
-                    <strong>${item.storageLocation}</strong><br>
-                    <small class="text-muted">${item.item}</small>
+                    <strong>${item.item} </strong><br>
+                    <small class="text-muted">${item.storageLocation}</small>
                 </div>
                 <div class="col-md-7 col-11">
                     <div class="row">
