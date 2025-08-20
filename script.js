@@ -286,7 +286,7 @@ function renderItems(locationName) {
                             <div class="uom-label">${item.uom}</div>
                             <div class="quantity-controls">
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', 1)">1</button>
+                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', -1)">-1</button>
                                 </div>
                                 <input type="number" class="form-control form-control-sm" value="${savedQuantities.qty || 0}" 
@@ -320,14 +320,14 @@ function renderItems(locationName) {
                             <div class="uom-label">${item.uom3}</div>
                             <div class="quantity-controls">
                                 <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', -1)">-1</button>
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', -0.1)">-0.1</button>
                                 </div>
                                 <input type="number" class="form-control form-control-sm" value="${savedQuantities.qty3 || 0}" 
                                        onchange="updateQuantity(${originalIndex}, 'qty3', this.value)" step="0.1">
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', 0.1)">+0.1</button>
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', 1)">+1</button>
+                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', +0.1)">+0.1</button>
+                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', -0.1)">-0.1</button>
                                 </div>
                             </div>
                         </div>
