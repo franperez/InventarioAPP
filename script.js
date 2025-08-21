@@ -813,3 +813,81 @@ window.addEventListener('beforeinstallprompt', (e) => {
         }
     }, 10000);
 });
+
+// Nueva función para exportar todas las ubicaciones
+function exportAllLocations() {
+    const allData = [];
+    
+    // Obtener los datos del inventario original para obtener UofM
+    const itemsData = {};
+    inventory.forEach(item => {
+        const key = `${item.storageLocation}|${item.item}`;
+        itemsData[key] = {
+            uom: item.uom,
+            uom2: item.uom2,
+            uom3: item.uom3
+        };
+    });
+    
+    // Recorrer cada ubicación para obtener los datos de cada item
+    Object.values(locations).forEach(location => {
+        Object.entries(location.quantities).forEach(([itemIndex, quantities]) => {
+            const item = inventory[itemIndex];
+            if (!item) return;
+            
+            // Si el item tiene alguna cantidad, agregarlo a los datos
+            if (quantities.qty > 0 || quantities.qty2 > 0 || quantities.qty3 > 0) {
+                allData.push({
+                    storageLocation: location.name, // Nuevo campo de la ubicación
+                    item: item.item,
+                    uom: item.uom,
+                    qty: quantities.qty || 0,
+                    uom2: item.uom2,
+                    qty2: quantities.qty2 || 0,
+                    uom3: item.uom3,
+                    qty3: quantities.qty3 || 0
+                });
+            }
+        });
+    });
+    
+    if (allData.length === 0) {
+        alert('No hay datos para exportar de las ubicaciones.');
+        return;
+    }
+    
+    // Generar el CSV
+    const headers = ['StorageLocation', 'Item', 'UofM', 'Qty', 'UofM2', 'Qty2', 'UofM3', 'Qty3'];
+    let csv = headers.join(',') + '\n';
+    
+    allData.forEach(row => {
+        const line = [
+            row.storageLocation,
+            row.item,
+            row.uom || '',
+            row.qty || 0,
+            row.uom2 || '',
+            row.qty2 || 0,
+            row.uom3 || '',
+            row.qty3 || 0
+        ].map(field => `"${field}"`).join(',');
+        csv += line + '\n';
+    });
+    
+    downloadCSV(csv, `inventario_ubicaciones_${new Date().toISOString().split('T')[0]}.csv`);
+}
+
+// Asegúrate de que la función downloadCSV() ya esté en tu archivo, no la dupliques.
+// Si no la tienes, aquí está el código:
+function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', filename);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}

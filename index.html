@@ -1,29 +1,33 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-   <meta charset="UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventario App</title>
-    
+
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="logo-192x192.png">
     <meta name="theme-color" content="#007bff">
-    
+
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes"> 
-    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Inventario App">
-    
-    
+
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
         <div class="container-fluid">
-            <button class="btn btn-outline-light me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#locationsMenu">
+            <button class="btn btn-outline-light me-2" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#locationsMenu">
                 <i class="bi bi-list"></i>
             </button>
             <span class="navbar-brand mb-0 h1">Inventario App</span>
@@ -53,7 +57,7 @@
 
     <div class="container-fluid" style="margin-top: 80px;">
         <div id="locationTabs" class="d-flex flex-wrap mb-0"></div>
-        
+
         <div class="inventory-container" id="inventoryContainer">
             <div class="text-center text-muted py-5">
                 <i class="bi bi-box-seam display-1"></i>
@@ -61,24 +65,28 @@
                 <p>Importa un archivo CSV o crea una nueva ubicación para comenzar.</p>
             </div>
         </div>
-        
+
         <div id="totalizationSection" class="totalization-section" style="display: none;">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4><i class="bi bi-calculator"></i> Totalización Global</h4>
                 <div>
                     <button class="btn btn-success me-2" onclick="exportTotals()">
-                        <i class="bi bi-download"></i> Exportar CSV
+                        <i class="bi bi-download"></i> Exportar Totales
+                    </button>
+                    <button class="btn btn-secondary me-2" onclick="exportAllLocations()">
+                        <i class="bi bi-download"></i> Exportar por Ubicación
                     </button>
                     <button class="btn btn-secondary" onclick="hideTotalization()">
                         <i class="bi bi-x-circle"></i> Cerrar
                     </button>
                 </div>
             </div>
-            
+
             <div class="mb-3">
-                <input type="text" class="form-control" id="searchTotals" placeholder="Buscar productos..." onkeyup="filterTotals()">
+                <input type="text" class="form-control" id="searchTotals" placeholder="Buscar productos..."
+                    onkeyup="filterTotals()">
             </div>
-            
+
             <div id="totalsContainer"></div>
         </div>
     </div>
@@ -92,7 +100,8 @@
                 </div>
                 <div class="modal-body">
                     <input type="file" class="form-control" id="csvFile" accept=".csv">
-                    <div class="form-text">Selecciona un archivo CSV con la estructura: StorageLocation, Item, UofM, Qty, UofM2, Qty2, UofM3, Qty3</div>
+                    <div class="form-text">Selecciona un archivo CSV con la estructura: StorageLocation, Item, UofM,
+                        Qty, UofM2, Qty2, UofM3, Qty3</div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -153,4 +162,5 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="script.js"></script>
 </body>
+
 </html>
