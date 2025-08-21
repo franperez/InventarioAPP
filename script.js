@@ -891,3 +891,22 @@ function downloadCSV(csv, filename) {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
 }
+
+
+
+// Nueva función para limpiar las cantidades de la ubicación actual
+function clearLocationQuantities() {
+    if (confirm(`¿Estás seguro de que quieres limpiar todas las cantidades de la ubicación "${currentLocationSettings}"? Esta acción no se puede deshacer.`)) {
+        if (currentLocationSettings && locations[currentLocationSettings]) {
+            locations[currentLocationSettings].quantities = {};
+            saveData();
+            
+            if (currentLocation === currentLocationSettings) {
+                showLocation(currentLocationSettings); // Refresca la vista
+            }
+            
+            alert('Cantidades de ubicación limpiadas exitosamente.');
+            bootstrap.Modal.getInstance(document.getElementById('locationSettingsModal')).hide();
+        }
+    }
+}
