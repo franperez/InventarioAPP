@@ -9,13 +9,14 @@ document.addEventListener('DOMContentLoaded', function() {
     loadData();
     updateLocationsList();
     updateLocationTabs();
+    createScrollToTopButton();
     
     // Register service worker for PWA
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/InventarioAPP/service-worker.js')
-        .then(registration => console.log('SW registered'))
-        .catch(error => console.log('SW registration failed'));
-}
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/InventarioAPP/service-worker.js')
+            .then(registration => console.log('SW registered'))
+            .catch(error => console.log('SW registration failed'));
+    }
 });
 
 // Load data from localStorage
@@ -247,6 +248,11 @@ function renderFilters() {
     filterContainer.innerHTML = filterHTML;
 }
 
+// FUNCIÓN CORREGIDA: Redondear números para evitar problemas de precisión
+function roundToDecimals(num, decimals = 1) {
+    return Math.round((num + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
+}
+
 // Render items for location
 function renderItems(locationName) {
     const location = locations[locationName];
@@ -267,8 +273,11 @@ function renderItems(locationName) {
         itemDiv.setAttribute('data-family', item.storageLocation);
         itemDiv.setAttribute('data-item', item.item.toLowerCase());
         
-        // Get saved quantities for this location
+        // CORREGIDO: Mostrar datos del CSV si no hay cantidades guardadas
         const savedQuantities = location.quantities[originalIndex] || {};
+        const displayQty = savedQuantities.qty !== undefined ? savedQuantities.qty : (item.qty || 0);
+        const displayQty2 = savedQuantities.qty2 !== undefined ? savedQuantities.qty2 : (item.qty2 || 0);
+        const displayQty3 = savedQuantities.qty3 !== undefined ? savedQuantities.qty3 : (item.qty3 || 0);
         
         itemDiv.innerHTML = `
             <div class="row align-items-center">
@@ -289,7 +298,7 @@ function renderItems(locationName) {
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', -1)">-1</button>
                                 </div>
-                                <input type="number" class="form-control form-control-sm" value="${savedQuantities.qty || 0}" 
+                                <input type="number" class="form-control form-control-sm" value="${displayQty}" 
                                        onchange="updateQuantity(${originalIndex}, 'qty', this.value)" step="0.1">
                                 <div class="btn-group btn-group-sm">
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', +0.1)">+0.1</button>
@@ -306,7 +315,7 @@ function renderItems(locationName) {
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty2', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty2', -1)">-1</button>
                                 </div>
-                                <input type="number" class="form-control form-control-sm" value="${savedQuantities.qty2 || 0}" 
+                                <input type="number" class="form-control form-control-sm" value="${displayQty2}" 
                                        onchange="updateQuantity(${originalIndex}, 'qty2', this.value)" step="0.1">
                                 <div class="btn-group btn-group-sm">
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty2', +0.1)">+0.1</button>
@@ -323,7 +332,7 @@ function renderItems(locationName) {
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', -1)">-1</button>
                                 </div>
-                                <input type="number" class="form-control form-control-sm" value="${savedQuantities.qty3 || 0}" 
+                                <input type="number" class="form-control form-control-sm" value="${displayQty3}" 
                                        onchange="updateQuantity(${originalIndex}, 'qty3', this.value)" step="0.1">
                                 <div class="btn-group btn-group-sm">
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', +0.1)">+0.1</button>
@@ -399,18 +408,19 @@ function toggleLock() {
     }
 }
 
-// Update quantity
+// CORREGIDA: Update quantity con redondeo
 function updateQuantity(itemIndex, field, value) {
     if (currentLocation) {
         if (!locations[currentLocation].quantities[itemIndex]) {
             locations[currentLocation].quantities[itemIndex] = {};
         }
-        locations[currentLocation].quantities[itemIndex][field] = parseFloat(value) || 0;
+        const roundedValue = roundToDecimals(parseFloat(value) || 0, 1);
+        locations[currentLocation].quantities[itemIndex][field] = roundedValue;
         saveData();
     }
 }
 
-// Adjust quantity with buttons
+// CORREGIDA: Adjust quantity with buttons con redondeo
 function adjustQuantity(itemIndex, field, adjustment) {
     if (currentLocation) {
         if (!locations[currentLocation].quantities[itemIndex]) {
@@ -419,16 +429,53 @@ function adjustQuantity(itemIndex, field, adjustment) {
         
         const currentValue = locations[currentLocation].quantities[itemIndex][field] || 0;
         const newValue = Math.max(0, currentValue + adjustment);
-        locations[currentLocation].quantities[itemIndex][field] = parseFloat(newValue.toFixed(1));
+        const roundedValue = roundToDecimals(newValue, 1);
+        locations[currentLocation].quantities[itemIndex][field] = roundedValue;
         
         // Update the input field
         const input = document.querySelector(`[data-index="${itemIndex}"] input[onchange*="${field}"]`);
         if (input) {
-            input.value = newValue;
+            input.value = roundedValue;
         }
         
         saveData();
     }
+}
+
+// NUEVA: Crear botón flotante para scroll to top
+function createScrollToTopButton() {
+    const scrollButton = document.createElement('button');
+    scrollButton.id = 'scrollToTopBtn';
+    scrollButton.className = 'btn btn-primary position-fixed';
+    scrollButton.innerHTML = '<i class="bi bi-arrow-up"></i>';
+    scrollButton.style.cssText = `
+        bottom: 20px;
+        right: 20px;
+        z-index: 1050;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    `;
+    
+    scrollButton.onclick = function() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    };
+    
+    document.body.appendChild(scrollButton);
+    
+    // Show/hide button based on scroll position
+    window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+            scrollButton.style.display = 'block';
+        } else {
+            scrollButton.style.display = 'none';
+        }
+    });
 }
 
 // Show location settings modal
@@ -566,7 +613,7 @@ function hideTotalization() {
     document.getElementById('inventoryContainer').style.display = 'block';
 }
 
-// CORREGIDO: Calculate totals across all locations, grouped by StorageLocation and Item
+// Calculate totals across all locations, grouped by StorageLocation and Item
 function calculateTotals() {
     const totals = {};
     
@@ -576,7 +623,7 @@ function calculateTotals() {
             const item = inventory[itemIndex];
             if (!item) return;
             
-            // CORREGIDO: Use StorageLocation + Item as the unique key
+            // Use StorageLocation + Item as the unique key
             const key = `${item.storageLocation}|${item.item}`;
             
             if (!totals[key]) {
@@ -691,7 +738,7 @@ function filterTotals() {
     });
 }
 
-// CORREGIDO: Export totals to CSV, grouped by StorageLocation and Item
+// Export totals to CSV, grouped by StorageLocation and Item
 function exportTotals() {
     const totals = {};
     
@@ -701,7 +748,7 @@ function exportTotals() {
             const item = inventory[itemIndex];
             if (!item) return;
             
-            // CORREGIDO: Use StorageLocation + Item as the unique key
+            // Use StorageLocation + Item as the unique key
             const key = `${item.storageLocation}|${item.item}`;
             
             if (!totals[key]) {
@@ -841,11 +888,11 @@ function exportAllLocations() {
                     storageLocation: location.name, // Nuevo campo de la ubicación
                     item: item.item,
                     uom: item.uom,
-                    qty: quantities.qty || 0,
+                    qty: roundToDecimals(quantities.qty || 0, 1),
                     uom2: item.uom2,
-                    qty2: quantities.qty2 || 0,
+                    qty2: roundToDecimals(quantities.qty2 || 0, 1),
                     uom3: item.uom3,
-                    qty3: quantities.qty3 || 0
+                    qty3: roundToDecimals(quantities.qty3 || 0, 1)
                 });
             }
         });
@@ -876,23 +923,6 @@ function exportAllLocations() {
     
     downloadCSV(csv, `inventario_ubicaciones_${new Date().toISOString().split('T')[0]}.csv`);
 }
-
-// Asegúrate de que la función downloadCSV() ya esté en tu archivo, no la dupliques.
-// Si no la tienes, aquí está el código:
-function downloadCSV(csv, filename) {
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', filename);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-}
-
-
 
 // Nueva función para limpiar las cantidades de la ubicación actual
 function clearLocationQuantities() {
