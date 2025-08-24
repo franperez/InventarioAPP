@@ -253,6 +253,81 @@ function roundToDecimals(num, decimals = 1) {
     return Math.round((num + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
 }
 
+// NUEVA: Función para evaluar expresiones matemáticas de forma segura
+function evaluateMathExpression(expression) {
+    try {
+        // Limpiar la expresión: solo permitir números, operadores básicos y puntos decimales
+        const cleanExpression = expression.replace(/[^0-9+\-*/().\s]/g, '');
+        
+        // Verificar que la expresión no esté vacía después de limpiar
+        if (!cleanExpression.trim()) {
+            return NaN;
+        }
+        
+        // Evaluar usando Function constructor (más seguro que eval)
+        const result = new Function('return ' + cleanExpression)();
+        
+        // Verificar que el resultado sea un número válido
+        if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
+            return result;
+        } else {
+            return NaN;
+        }
+    } catch (error) {
+        return NaN;
+    }
+}
+
+// NUEVA: Mostrar mensaje de error cuando una operación matemática falla
+function showMathError(itemIndex, field) {
+    const input = document.querySelector(`[data-index="${itemIndex}"] input[onchange*="${field}"]`);
+    if (input) {
+        // Guardar el color original
+        const originalBorder = input.style.border;
+        
+        // Cambiar a color de error
+        input.style.border = '2px solid #dc3545';
+        input.style.boxShadow = '0 0 5px rgba(220, 53, 69, 0.3)';
+        
+        // Crear tooltip de error
+        const tooltip = document.createElement('div');
+        tooltip.className = 'math-error-tooltip';
+        tooltip.innerHTML = '<small>Operación inválida</small>';
+        tooltip.style.cssText = `
+            position: absolute;
+            background: #dc3545;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            z-index: 1000;
+            margin-top: -25px;
+            margin-left: 5px;
+        `;
+        
+        input.parentElement.style.position = 'relative';
+        input.parentElement.appendChild(tooltip);
+        
+        // Restaurar después de 2 segundos
+        setTimeout(() => {
+            input.style.border = originalBorder;
+            input.style.boxShadow = '';
+            if (tooltip.parentElement) {
+                tooltip.parentElement.removeChild(tooltip);
+            }
+        }, 2000);
+    }
+}
+
+// NUEVA: Manejar tecla Enter para ejecutar operaciones matemáticas inmediatamente
+function handleMathKeypress(event, itemIndex, field) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        const input = event.target;
+        updateQuantity(itemIndex, field, input.value);
+    }
+}
+
 // Render items for location
 function renderItems(locationName) {
     const location = locations[locationName];
@@ -298,8 +373,10 @@ function renderItems(locationName) {
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', -1)">-1</button>
                                 </div>
-                                <input type="number" class="form-control form-control-sm" value="${displayQty}" 
-                                       onchange="updateQuantity(${originalIndex}, 'qty', this.value)" step="0.1">
+                                <input type="text" class="form-control form-control-sm math-input" value="${displayQty}" 
+                                       onchange="updateQuantity(${originalIndex}, 'qty', this.value)" 
+                                       onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty')"
+                                       placeholder="ej: 5+3, 10-2" step="0.1">
                                 <div class="btn-group btn-group-sm">
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', +0.1)">+0.1</button>
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', -0.1)">-0.1</button>
@@ -315,8 +392,10 @@ function renderItems(locationName) {
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty2', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty2', -1)">-1</button>
                                 </div>
-                                <input type="number" class="form-control form-control-sm" value="${displayQty2}" 
-                                       onchange="updateQuantity(${originalIndex}, 'qty2', this.value)" step="0.1">
+                                <input type="text" class="form-control form-control-sm math-input" value="${displayQty2}" 
+                                       onchange="updateQuantity(${originalIndex}, 'qty2', this.value)" 
+                                       onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty2')"
+                                       placeholder="ej: 8*2, 20/4" step="0.1">
                                 <div class="btn-group btn-group-sm">
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty2', +0.1)">+0.1</button>
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty2', -0.1)">-0.1</button>
@@ -332,8 +411,10 @@ function renderItems(locationName) {
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', -1)">-1</button>
                                 </div>
-                                <input type="number" class="form-control form-control-sm" value="${displayQty3}" 
-                                       onchange="updateQuantity(${originalIndex}, 'qty3', this.value)" step="0.1">
+                                <input type="text" class="form-control form-control-sm math-input" value="${displayQty3}" 
+                                       onchange="updateQuantity(${originalIndex}, 'qty3', this.value)" 
+                                       onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty3')"
+                                       placeholder="ej: 15+5, 12-4" step="0.1">
                                 <div class="btn-group btn-group-sm">
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', +0.1)">+0.1</button>
                                     <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', -0.1)">-0.1</button>
@@ -408,14 +489,42 @@ function toggleLock() {
     }
 }
 
-// CORREGIDA: Update quantity con redondeo
+// CORREGIDA: Update quantity con redondeo y soporte para operaciones matemáticas
 function updateQuantity(itemIndex, field, value) {
     if (currentLocation) {
         if (!locations[currentLocation].quantities[itemIndex]) {
             locations[currentLocation].quantities[itemIndex] = {};
         }
-        const roundedValue = roundToDecimals(parseFloat(value) || 0, 1);
+        
+        let finalValue;
+        
+        // Si el valor contiene operadores matemáticos, intentar evaluarlo
+        if (typeof value === 'string' && /[+\-*/]/.test(value)) {
+            const calculatedValue = evaluateMathExpression(value);
+            
+            if (!isNaN(calculatedValue)) {
+                finalValue = Math.max(0, calculatedValue); // No permitir valores negativos
+            } else {
+                // Si la evaluación falla, mantener el valor anterior o usar 0
+                finalValue = locations[currentLocation].quantities[itemIndex][field] || 0;
+                
+                // Mostrar mensaje de error brevemente
+                showMathError(itemIndex, field);
+                return;
+            }
+        } else {
+            finalValue = Math.max(0, parseFloat(value) || 0);
+        }
+        
+        const roundedValue = roundToDecimals(finalValue, 1);
         locations[currentLocation].quantities[itemIndex][field] = roundedValue;
+        
+        // Actualizar el input con el resultado calculado
+        const input = document.querySelector(`[data-index="${itemIndex}"] input[onchange*="${field}"]`);
+        if (input) {
+            input.value = roundedValue;
+        }
+        
         saveData();
     }
 }

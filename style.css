@@ -108,6 +108,35 @@
     padding: 15px;
 }
 
+/* Estilos para inputs que soportan operaciones matemáticas */
+.math-input {
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+}
+
+.math-input:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
+    background: #ffffff;
+}
+
+.math-input::placeholder {
+    font-size: 10px;
+    color: #6c757d;
+    opacity: 0.7;
+}
+
+.math-error-tooltip {
+    animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(5px); }
+    20% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-5px); }
+}
+
 @media (max-width: 768px) {
     .quantity-controls {
         flex-direction: column;
