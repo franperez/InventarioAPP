@@ -3,6 +3,8 @@ let inventory = [];
 let locations = {};
 let currentLocation = null;
 let currentLocationSettings = null;
+let selectedItems = new Set();
+let isSelectionMode = false;
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
@@ -10,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateLocationsList();
     updateLocationTabs();
     createScrollToTopButton();
+    preventMobileDoubleZoom();
     
     // Register service worker for PWA
     if ('serviceWorker' in navigator) {
@@ -196,15 +199,31 @@ function showLocation(locationName) {
         return;
     }
     
+    // Clear selection when changing location
+    clearSelection();
+    
     // Header with location name and lock switch
     container.innerHTML = `
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4><i class="bi bi-geo-alt"></i> ${locationName}</h4>
-            <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="lockSwitch" ${location.locked ? 'checked' : ''} onchange="toggleLock()">
-                <label class="form-check-label" for="lockSwitch">
-                    Bloquear orden
-                </label>
+            <div class="d-flex align-items-center gap-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="lockSwitch" ${location.locked ? 'checked' : ''} onchange="toggleLock()">
+                    <label class="form-check-label" for="lockSwitch">
+                        Bloquear orden
+                    </label>
+                </div>
+                ${!location.locked ? `
+                <div class="selection-controls" style="display: none;">
+                    <button class="btn btn-sm btn-outline-primary me-2" onclick="selectAllItems()">
+                        <i class="bi bi-check-all"></i> Todos
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="clearSelection()">
+                        <i class="bi bi-x-circle"></i> Limpiar
+                    </button>
+                    <span class="badge bg-info" id="selectionCounter">0 seleccionados</span>
+                </div>
+                ` : ''}
             </div>
         </div>
         <div id="filter-container"></div>
@@ -248,6 +267,26 @@ function renderFilters() {
     filterContainer.innerHTML = filterHTML;
 }
 
+// NUEVA: Función para prevenir el doble zoom en móviles
+function preventMobileDoubleZoom() {
+    let lastTouchEnd = 0;
+    
+    document.addEventListener('touchend', function (event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+    
+    // También prevenir el gesto de pellizco para zoom
+    document.addEventListener('touchmove', function (event) {
+        if (event.scale !== 1) {
+            event.preventDefault();
+        }
+    }, { passive: false });
+}
+
 // FUNCIÓN CORREGIDA: Redondear números para evitar problemas de precisión
 function roundToDecimals(num, decimals = 1) {
     return Math.round((num + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
@@ -278,7 +317,6 @@ function evaluateMathExpression(expression) {
     }
 }
 
-// NUEVA: Mostrar mensaje de error cuando una operación matemática falla
 function showMathError(itemIndex, field) {
     const input = document.querySelector(`[data-index="${itemIndex}"] input[onchange*="${field}"]`);
     if (input) {
@@ -343,10 +381,20 @@ function renderItems(locationName) {
         );
         
         const itemDiv = document.createElement('div');
-        itemDiv.className = `item-row ${location.locked ? 'locked' : ''}`;
+        itemDiv.className = `item-row ${location.locked ? 'locked' : ''} ${selectedItems.has(originalIndex) ? 'selected' : ''}`;
         itemDiv.setAttribute('data-index', originalIndex);
         itemDiv.setAttribute('data-family', item.storageLocation);
         itemDiv.setAttribute('data-item', item.item.toLowerCase());
+        
+        // Agregar evento de click para selección múltiple
+        if (!location.locked) {
+            itemDiv.addEventListener('click', function(e) {
+                // Solo activar selección si no se clickeó en un input o botón
+                if (!e.target.matches('input, button, .btn')) {
+                    toggleItemSelection(originalIndex, itemDiv);
+                }
+            });
+        }
         
         // CORREGIDO: Mostrar datos del CSV si no hay cantidades guardadas
         const savedQuantities = location.quantities[originalIndex] || {};
@@ -464,7 +512,66 @@ function filterItems() {
     });
 }
 
-// Initialize sortable
+// NUEVA: Función para alternar selección de items
+function toggleItemSelection(itemIndex, itemElement) {
+    if (selectedItems.has(itemIndex)) {
+        selectedItems.delete(itemIndex);
+        itemElement.classList.remove('selected');
+    } else {
+        selectedItems.add(itemIndex);
+        itemElement.classList.add('selected');
+    }
+    
+    updateSelectionUI();
+}
+
+// NUEVA: Actualizar interfaz de selección
+function updateSelectionUI() {
+    const selectionControls = document.querySelector('.selection-controls');
+    const selectionCounter = document.getElementById('selectionCounter');
+    
+    if (selectedItems.size > 0) {
+        if (selectionControls) {
+            selectionControls.style.display = 'flex';
+            isSelectionMode = true;
+        }
+        if (selectionCounter) {
+            selectionCounter.textContent = `${selectedItems.size} seleccionados`;
+        }
+    } else {
+        if (selectionControls) {
+            selectionControls.style.display = 'none';
+            isSelectionMode = false;
+        }
+    }
+}
+
+// NUEVA: Seleccionar todos los items visibles
+function selectAllItems() {
+    const visibleItems = document.querySelectorAll('#itemsList .item-row:not([style*="display: none"])');
+    
+    visibleItems.forEach(itemElement => {
+        const itemIndex = parseInt(itemElement.getAttribute('data-index'));
+        selectedItems.add(itemIndex);
+        itemElement.classList.add('selected');
+    });
+    
+    updateSelectionUI();
+}
+
+// NUEVA: Limpiar selección
+function clearSelection() {
+    selectedItems.clear();
+    
+    const selectedElements = document.querySelectorAll('#itemsList .item-row.selected');
+    selectedElements.forEach(element => {
+        element.classList.remove('selected');
+    });
+    
+    updateSelectionUI();
+}
+
+// Initialize sortable con soporte para selección múltiple
 function initSortable() {
     const itemsList = document.getElementById('itemsList');
     if (itemsList && !locations[currentLocation]?.locked) {
@@ -472,8 +579,21 @@ function initSortable() {
             animation: 150,
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',
+            multiDrag: true,
+            selectedClass: 'selected',
+            fallbackTolerance: 3,
+            onStart: function(evt) {
+                // Si hay items seleccionados y el item arrastrado no está seleccionado,
+                // seleccionarlo automáticamente
+                const draggedIndex = parseInt(evt.item.getAttribute('data-index'));
+                if (selectedItems.size > 0 && !selectedItems.has(draggedIndex)) {
+                    toggleItemSelection(draggedIndex, evt.item);
+                }
+            },
             onEnd: function(evt) {
                 updateItemOrder();
+                // Mantener la selección después del drag
+                setTimeout(updateSelectionUI, 100);
             }
         });
     }
@@ -484,6 +604,12 @@ function toggleLock() {
     const lockSwitch = document.getElementById('lockSwitch');
     if (currentLocation) {
         locations[currentLocation].locked = lockSwitch.checked;
+        
+        // Limpiar selección cuando se bloquea
+        if (lockSwitch.checked) {
+            clearSelection();
+        }
+        
         saveData();
         showLocation(currentLocation); // Refresh to apply lock state
     }
@@ -566,6 +692,7 @@ function createScrollToTopButton() {
         height: 50px;
         display: none;
         box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        touch-action: manipulation;
     `;
     
     scrollButton.onclick = function() {
