@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     preventMobileDoubleZoom();
     
     // Register service worker for PWA
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator && window.location.protocol !== 'file:'){
         navigator.serviceWorker.register('/InventarioAPP/service-worker.js')
             .then(registration => console.log('SW registered'))
             .catch(error => console.log('SW registration failed'));
@@ -372,6 +372,12 @@ function renderItems(locationName) {
     const itemsList = document.getElementById('itemsList');
     itemsList.innerHTML = '';
     
+    // Destruir sortable existente
+    if (itemsList.sortableInstance) {
+        itemsList.sortableInstance.destroy();
+        itemsList.sortableInstance = null;
+    }
+    
     // Sort items according to saved order
     const orderedItems = location.order.map(index => inventory[index]).filter(item => item);
     
@@ -386,17 +392,36 @@ function renderItems(locationName) {
         itemDiv.setAttribute('data-family', item.storageLocation);
         itemDiv.setAttribute('data-item', item.item.toLowerCase());
         
-        // Agregar evento de click para selección múltiple
+        // Eventos mejorados para selección múltiple
         if (!location.locked) {
+            // Evento de click para selección
             itemDiv.addEventListener('click', function(e) {
-                // Solo activar selección si no se clickeó en un input o botón
-                if (!e.target.matches('input, button, .btn')) {
-                    toggleItemSelection(originalIndex, itemDiv);
+                // Prevenir selección si se clickeó en elementos interactivos
+                if (e.target.closest('input, button, .btn')) {
+                    return;
+                }
+                
+                e.preventDefault();
+                e.stopPropagation();
+                toggleItemSelection(originalIndex, itemDiv);
+            });
+            
+            // Prevenir interferencia con drag en elementos interactivos
+            itemDiv.addEventListener('mousedown', function(e) {
+                if (e.target.closest('input, button, .btn')) {
+                    e.stopPropagation();
+                }
+            });
+            
+            // Eventos táctiles para dispositivos móviles
+            itemDiv.addEventListener('touchstart', function(e) {
+                if (e.target.closest('input, button, .btn')) {
+                    e.stopPropagation();
                 }
             });
         }
         
-        // CORREGIDO: Mostrar datos del CSV si no hay cantidades guardadas
+        // Mostrar datos del CSV si no hay cantidades guardadas
         const savedQuantities = location.quantities[originalIndex] || {};
         const displayQty = savedQuantities.qty !== undefined ? savedQuantities.qty : (item.qty || 0);
         const displayQty2 = savedQuantities.qty2 !== undefined ? savedQuantities.qty2 : (item.qty2 || 0);
@@ -405,10 +430,11 @@ function renderItems(locationName) {
         itemDiv.innerHTML = `
             <div class="row align-items-center">
                 <div class="col-1 text-center">
-                    <i class="bi bi-grip-vertical drag-handle"></i>
+                    <i class="bi bi-grip-vertical drag-handle" 
+                       style="cursor: ${location.locked ? 'not-allowed' : 'grab'}; user-select: none; font-size: 16px; padding: 5px;"></i>
                 </div>
                 <div class="col-md-4 col-12">
-                    <strong>${item.item} </strong><br>
+                    <strong>${item.item}</strong><br>
                     <small class="text-muted">${item.storageLocation}</small>
                 </div>
                 <div class="col-md-7 col-11">
@@ -418,16 +444,17 @@ function renderItems(locationName) {
                             <div class="uom-label">${item.uom}</div>
                             <div class="quantity-controls">
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', +1)">+1</button>
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', -1)">-1</button>
+                                    <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', +1)">+1</button>
+                                    <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', -1)">-1</button>
                                 </div>
                                 <input type="text" class="form-control form-control-sm math-input" value="${displayQty}" 
-                                       onchange="updateQuantity(${originalIndex}, 'qty', this.value)" 
+                                       onchange="event.stopPropagation(); updateQuantity(${originalIndex}, 'qty', this.value)" 
                                        onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty')"
+                                       onclick="event.stopPropagation();"
                                        placeholder="ej: 5+3, 10-2" step="0.1">
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', +0.1)">+0.1</button>
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty', -0.1)">-0.1</button>
+                                    <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', +0.1)">+0.1</button>
+                                    <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', -0.1)">-0.1</button>
                                 </div>
                             </div>
                         </div>
@@ -437,16 +464,17 @@ function renderItems(locationName) {
                             <div class="uom-label">${item.uom2}</div>
                             <div class="quantity-controls">
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty2', +1)">+1</button>
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty2', -1)">-1</button>
+                                    <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', +1)">+1</button>
+                                    <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', -1)">-1</button>
                                 </div>
                                 <input type="text" class="form-control form-control-sm math-input" value="${displayQty2}" 
-                                       onchange="updateQuantity(${originalIndex}, 'qty2', this.value)" 
+                                       onchange="event.stopPropagation(); updateQuantity(${originalIndex}, 'qty2', this.value)" 
                                        onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty2')"
+                                       onclick="event.stopPropagation();"
                                        placeholder="ej: 8*2, 20/4" step="0.1">
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty2', +0.1)">+0.1</button>
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty2', -0.1)">-0.1</button>
+                                    <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', +0.1)">+0.1</button>
+                                    <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', -0.1)">-0.1</button>
                                 </div>
                             </div>
                         </div>
@@ -456,16 +484,17 @@ function renderItems(locationName) {
                             <div class="uom-label">${item.uom3}</div>
                             <div class="quantity-controls">
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', +1)">+1</button>
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', -1)">-1</button>
+                                    <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', +1)">+1</button>
+                                    <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', -1)">-1</button>
                                 </div>
                                 <input type="text" class="form-control form-control-sm math-input" value="${displayQty3}" 
-                                       onchange="updateQuantity(${originalIndex}, 'qty3', this.value)" 
+                                       onchange="event.stopPropagation(); updateQuantity(${originalIndex}, 'qty3', this.value)" 
                                        onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty3')"
+                                       onclick="event.stopPropagation();"
                                        placeholder="ej: 15+5, 12-4" step="0.1">
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', +0.1)">+0.1</button>
-                                    <button class="btn btn-outline-secondary" onclick="adjustQuantity(${originalIndex}, 'qty3', -0.1)">-0.1</button>
+                                    <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', +0.1)">+0.1</button>
+                                    <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', -0.1)">-0.1</button>
                                 </div>
                             </div>
                         </div>
@@ -477,6 +506,13 @@ function renderItems(locationName) {
         
         itemsList.appendChild(itemDiv);
     });
+    
+    // Inicializar sortable después de renderizar todos los items
+    if (!location.locked) {
+        setTimeout(() => {
+            initSortable();
+        }, 100);
+    }
 }
 
 // Update item order after drag and drop
@@ -487,8 +523,20 @@ function updateItemOrder() {
     if (currentLocation) {
         locations[currentLocation].order = newOrder;
         saveData();
+        
+        // Actualizar índices de elementos seleccionados si es necesario
+        const updatedSelectedItems = new Set();
+        selectedItems.forEach(oldIndex => {
+            const newPosition = newOrder.indexOf(oldIndex);
+            if (newPosition !== -1) {
+                updatedSelectedItems.add(oldIndex);
+            }
+        });
+        selectedItems = updatedSelectedItems;
+        updateSelectionUI();
     }
 }
+
 
 // Function to filter items based on selected family and search term
 function filterItems() {
@@ -517,13 +565,18 @@ function toggleItemSelection(itemIndex, itemElement) {
     if (selectedItems.has(itemIndex)) {
         selectedItems.delete(itemIndex);
         itemElement.classList.remove('selected');
+        console.log(`Item ${itemIndex} deseleccionado`);
     } else {
         selectedItems.add(itemIndex);
         itemElement.classList.add('selected');
+        console.log(`Item ${itemIndex} seleccionado`);
     }
     
     updateSelectionUI();
+    console.log('Items actualmente seleccionados:', Array.from(selectedItems));
 }
+
+
 
 // NUEVA: Actualizar interfaz de selección
 function updateSelectionUI() {
@@ -557,6 +610,7 @@ function selectAllItems() {
     });
     
     updateSelectionUI();
+    console.log(`${selectedItems.size} items seleccionados`);
 }
 
 // NUEVA: Limpiar selección
@@ -569,33 +623,89 @@ function clearSelection() {
     });
     
     updateSelectionUI();
+    console.log('Selección limpiada');
 }
 
 // Initialize sortable con soporte para selección múltiple
 function initSortable() {
     const itemsList = document.getElementById('itemsList');
     if (itemsList && !locations[currentLocation]?.locked) {
-        new Sortable(itemsList, {
+        // Destruir sortable existente si existe
+        if (itemsList.sortableInstance) {
+            itemsList.sortableInstance.destroy();
+        }
+        
+        itemsList.sortableInstance = new Sortable(itemsList, {
             animation: 150,
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',
-            multiDrag: true,
-            selectedClass: 'selected',
-            fallbackTolerance: 3,
+            dragClass: 'sortable-drag',
+            
+            // Configuración básica de drag
+            handle: '.drag-handle',
+            filter: '.locked, input, button, .btn',
+            preventOnFilter: false,
+            
+            // Configuración para dispositivos móviles
+            delay: 100,
+            delayOnTouchOnly: true,
+            touchStartThreshold: 5,
+            fallbackTolerance: 10,
+            
             onStart: function(evt) {
-                // Si hay items seleccionados y el item arrastrado no está seleccionado,
-                // seleccionarlo automáticamente
+                console.log('Iniciando drag');
+                
                 const draggedIndex = parseInt(evt.item.getAttribute('data-index'));
-                if (selectedItems.size > 0 && !selectedItems.has(draggedIndex)) {
+                
+                // Si el elemento arrastrado no está seleccionado, limpiar selección previa y seleccionarlo
+                if (!selectedItems.has(draggedIndex)) {
+                    clearSelection();
                     toggleItemSelection(draggedIndex, evt.item);
                 }
+                
+                // Marcar todos los items seleccionados visualmente
+                selectedItems.forEach(index => {
+                    const element = document.querySelector(`[data-index="${index}"]`);
+                    if (element) {
+                        element.classList.add('sortable-chosen');
+                        element.style.opacity = '0.7';
+                    }
+                });
+                
+                console.log('Items siendo arrastrados:', Array.from(selectedItems));
             },
+            
             onEnd: function(evt) {
-                updateItemOrder();
+                console.log('Finalizando drag');
+                
+                // Limpiar estilos visuales
+                document.querySelectorAll('.sortable-chosen, .sortable-drag').forEach(el => {
+                    el.classList.remove('sortable-chosen', 'sortable-drag');
+                    el.style.opacity = '';
+                });
+                
+                // Si hay múltiples items seleccionados, moverlos todos juntos
+                if (selectedItems.size > 1) {
+                    moveMultipleItems(evt);
+                } else {
+                    // Movimiento simple
+                    updateItemOrder();
+                }
+                
                 // Mantener la selección después del drag
-                setTimeout(updateSelectionUI, 100);
+                setTimeout(() => {
+                    selectedItems.forEach(index => {
+                        const element = document.querySelector(`[data-index="${index}"]`);
+                        if (element) {
+                            element.classList.add('selected');
+                        }
+                    });
+                    updateSelectionUI();
+                }, 100);
             }
         });
+        
+        console.log('Sortable inicializado');
     }
 }
 
@@ -1175,4 +1285,53 @@ function clearLocationQuantities() {
             bootstrap.Modal.getInstance(document.getElementById('locationSettingsModal')).hide();
         }
     }
+}
+
+
+function moveMultipleItems(evt) {
+    const fromIndex = evt.oldIndex;
+    const toIndex = evt.newIndex;
+    
+    if (fromIndex === toIndex) {
+        return;
+    }
+    
+    const currentOrder = [...locations[currentLocation].order];
+    const selectedIndices = Array.from(selectedItems).sort((a, b) => {
+        const posA = currentOrder.indexOf(a);
+        const posB = currentOrder.indexOf(b);
+        return posA - posB;
+    });
+    
+    // Remover items seleccionados del orden actual
+    const itemsToMove = [];
+    selectedIndices.reverse().forEach(index => {
+        const position = currentOrder.indexOf(index);
+        if (position !== -1) {
+            itemsToMove.unshift(currentOrder.splice(position, 1)[0]);
+        }
+    });
+    
+    // Calcular nueva posición ajustada
+    let insertPosition = toIndex;
+    
+    // Ajustar posición basada en items removidos antes de la posición objetivo
+    selectedIndices.forEach(index => {
+        const originalPos = locations[currentLocation].order.indexOf(index);
+        if (originalPos < evt.oldIndex) {
+            insertPosition--;
+        }
+    });
+    
+    // Insertar items en la nueva posición
+    currentOrder.splice(insertPosition, 0, ...itemsToMove);
+    
+    // Actualizar orden en la ubicación
+    locations[currentLocation].order = currentOrder;
+    saveData();
+    
+    // Re-renderizar la vista
+    renderItems(currentLocation);
+    
+    console.log('Múltiples items movidos a posición:', insertPosition);
 }
