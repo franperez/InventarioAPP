@@ -14,6 +14,14 @@ document.addEventListener('DOMContentLoaded', function() {
     createScrollToTopButton();
     preventMobileDoubleZoom();
     
+    // Verificar que SortableJS se cargó correctamente
+    if (typeof Sortable === 'undefined') {
+        console.error('SortableJS no se cargó correctamente');
+        alert('Error: SortableJS no se pudo cargar. Verifica tu conexión a internet.');
+    } else {
+        console.log('SortableJS cargado correctamente');
+    }
+    
     // Register service worker for PWA
     if ('serviceWorker' in navigator && window.location.protocol !== 'file:'){
         navigator.serviceWorker.register('/InventarioAPP/service-worker.js')
@@ -230,11 +238,9 @@ function showLocation(locationName) {
         <div id="itemsList"></div>
     `;
     
-    // Render the filters and the items list
     renderFilters();
     renderItems(locationName);
     
-    // Initialize sortable if not locked
     if (!location.locked) {
         initSortable();
     }
@@ -267,7 +273,7 @@ function renderFilters() {
     filterContainer.innerHTML = filterHTML;
 }
 
-// NUEVA: Función para prevenir el doble zoom en móviles
+// Función para prevenir el doble zoom en móviles
 function preventMobileDoubleZoom() {
     let lastTouchEnd = 0;
     
@@ -279,7 +285,6 @@ function preventMobileDoubleZoom() {
         lastTouchEnd = now;
     }, false);
     
-    // También prevenir el gesto de pellizco para zoom
     document.addEventListener('touchmove', function (event) {
         if (event.scale !== 1) {
             event.preventDefault();
@@ -287,32 +292,53 @@ function preventMobileDoubleZoom() {
     }, { passive: false });
 }
 
-// FUNCIÓN CORREGIDA: Redondear números para evitar problemas de precisión
-function roundToDecimals(num, decimals = 1) {
+// FUNCIÓN MEJORADA: Redondear números para evitar problemas de precisión
+function roundToDecimals(num, decimals = 2) {
     return Math.round((num + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
 }
 
-// NUEVA: Función para evaluar expresiones matemáticas de forma segura
+// FUNCIÓN NUEVA: Formatear número para mostrar
+function formatNumber(num) {
+    if (num === 0) return '0';
+    
+    if (num === Math.floor(num)) {
+        return num.toString();
+    }
+    
+    const rounded = roundToDecimals(num, 2);
+    return rounded.toString().replace(/\.?0+$/, '');
+}
+
+// FUNCIÓN NUEVA: Validar entrada de números decimales en tiempo real
+function validateDecimalInput(event) {
+    const input = event.target;
+    const value = input.value;
+    
+    const validPattern = /^[0-9+\-*/().\s]*$/;
+    
+    if (!validPattern.test(value)) {
+        input.value = value.replace(/[^0-9+\-*/().\s]/g, '');
+    }
+}
+
+// Función para evaluar expresiones matemáticas de forma segura
 function evaluateMathExpression(expression) {
     try {
-        // Limpiar la expresión: solo permitir números, operadores básicos y puntos decimales
         const cleanExpression = expression.replace(/[^0-9+\-*/().\s]/g, '');
         
-        // Verificar que la expresión no esté vacía después de limpiar
         if (!cleanExpression.trim()) {
             return NaN;
         }
         
-        // Evaluar usando Function constructor (más seguro que eval)
         const result = new Function('return ' + cleanExpression)();
         
-        // Verificar que el resultado sea un número válido
         if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
             return result;
         } else {
             return NaN;
         }
     } catch (error) {
+        console.warn('Error evaluating math expression:', error);
         return NaN;
     }
 }
@@ -320,14 +346,11 @@ function evaluateMathExpression(expression) {
 function showMathError(itemIndex, field) {
     const input = document.querySelector(`[data-index="${itemIndex}"] input[onchange*="${field}"]`);
     if (input) {
-        // Guardar el color original
         const originalBorder = input.style.border;
         
-        // Cambiar a color de error
         input.style.border = '2px solid #dc3545';
         input.style.boxShadow = '0 0 5px rgba(220, 53, 69, 0.3)';
         
-        // Crear tooltip de error
         const tooltip = document.createElement('div');
         tooltip.className = 'math-error-tooltip';
         tooltip.innerHTML = '<small>Operación inválida</small>';
@@ -346,7 +369,6 @@ function showMathError(itemIndex, field) {
         input.parentElement.style.position = 'relative';
         input.parentElement.appendChild(tooltip);
         
-        // Restaurar después de 2 segundos
         setTimeout(() => {
             input.style.border = originalBorder;
             input.style.boxShadow = '';
@@ -357,7 +379,7 @@ function showMathError(itemIndex, field) {
     }
 }
 
-// NUEVA: Manejar tecla Enter para ejecutar operaciones matemáticas inmediatamente
+// Manejar tecla Enter para ejecutar operaciones matemáticas inmediatamente
 function handleMathKeypress(event, itemIndex, field) {
     if (event.key === 'Enter') {
         event.preventDefault();
@@ -372,13 +394,11 @@ function renderItems(locationName) {
     const itemsList = document.getElementById('itemsList');
     itemsList.innerHTML = '';
     
-    // Destruir sortable existente
     if (itemsList.sortableInstance) {
         itemsList.sortableInstance.destroy();
         itemsList.sortableInstance = null;
     }
     
-    // Sort items according to saved order
     const orderedItems = location.order.map(index => inventory[index]).filter(item => item);
     
     orderedItems.forEach((item, displayIndex) => {
@@ -392,28 +412,22 @@ function renderItems(locationName) {
         itemDiv.setAttribute('data-family', item.storageLocation);
         itemDiv.setAttribute('data-item', item.item.toLowerCase());
         
-        // Eventos mejorados para selección múltiple
         if (!location.locked) {
-            // Evento de click para selección
             itemDiv.addEventListener('click', function(e) {
-                // Prevenir selección si se clickeó en elementos interactivos
                 if (e.target.closest('input, button, .btn')) {
                     return;
                 }
-                
                 e.preventDefault();
                 e.stopPropagation();
                 toggleItemSelection(originalIndex, itemDiv);
             });
             
-            // Prevenir interferencia con drag en elementos interactivos
             itemDiv.addEventListener('mousedown', function(e) {
                 if (e.target.closest('input, button, .btn')) {
                     e.stopPropagation();
                 }
             });
             
-            // Eventos táctiles para dispositivos móviles
             itemDiv.addEventListener('touchstart', function(e) {
                 if (e.target.closest('input, button, .btn')) {
                     e.stopPropagation();
@@ -421,11 +435,10 @@ function renderItems(locationName) {
             });
         }
         
-        // Mostrar datos del CSV si no hay cantidades guardadas
         const savedQuantities = location.quantities[originalIndex] || {};
-        const displayQty = savedQuantities.qty !== undefined ? savedQuantities.qty : (item.qty || 0);
-        const displayQty2 = savedQuantities.qty2 !== undefined ? savedQuantities.qty2 : (item.qty2 || 0);
-        const displayQty3 = savedQuantities.qty3 !== undefined ? savedQuantities.qty3 : (item.qty3 || 0);
+        const displayQty = savedQuantities.qty !== undefined ? formatNumber(savedQuantities.qty) : formatNumber(item.qty || 0);
+        const displayQty2 = savedQuantities.qty2 !== undefined ? formatNumber(savedQuantities.qty2) : formatNumber(item.qty2 || 0);
+        const displayQty3 = savedQuantities.qty3 !== undefined ? formatNumber(savedQuantities.qty3) : formatNumber(item.qty3 || 0);
         
         itemDiv.innerHTML = `
             <div class="row align-items-center">
@@ -447,11 +460,14 @@ function renderItems(locationName) {
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', -1)">-1</button>
                                 </div>
-                                <input type="text" class="form-control form-control-sm math-input" value="${displayQty}" 
+                                <input type="number" class="form-control form-control-sm math-input mobile-dark-text" 
+                                       value="${displayQty}" 
+                                       step="0.01" min="0"
                                        onchange="event.stopPropagation(); updateQuantity(${originalIndex}, 'qty', this.value)" 
                                        onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty')"
+                                       oninput="validateDecimalInput(event)"
                                        onclick="event.stopPropagation();"
-                                       placeholder="ej: 5+3, 10-2" step="0.1">
+                                       placeholder="ej: 0.35, 5+0.25">
                                 <div class="btn-group btn-group-sm">
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', +0.1)">+0.1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', -0.1)">-0.1</button>
@@ -467,11 +483,14 @@ function renderItems(locationName) {
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', -1)">-1</button>
                                 </div>
-                                <input type="text" class="form-control form-control-sm math-input" value="${displayQty2}" 
+                                <input type="number" class="form-control form-control-sm math-input mobile-dark-text" 
+                                       value="${displayQty2}" 
+                                       step="0.01" min="0"
                                        onchange="event.stopPropagation(); updateQuantity(${originalIndex}, 'qty2', this.value)" 
                                        onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty2')"
+                                       oninput="validateDecimalInput(event)"
                                        onclick="event.stopPropagation();"
-                                       placeholder="ej: 8*2, 20/4" step="0.1">
+                                       placeholder="ej: 0.15, 8*0.5">
                                 <div class="btn-group btn-group-sm">
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', +0.1)">+0.1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', -0.1)">-0.1</button>
@@ -487,11 +506,14 @@ function renderItems(locationName) {
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', -1)">-1</button>
                                 </div>
-                                <input type="text" class="form-control form-control-sm math-input" value="${displayQty3}" 
+                                <input type="number" class="form-control form-control-sm math-input mobile-dark-text" 
+                                       value="${displayQty3}" 
+                                       step="0.01" min="0"
                                        onchange="event.stopPropagation(); updateQuantity(${originalIndex}, 'qty3', this.value)" 
                                        onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty3')"
+                                       oninput="validateDecimalInput(event)"
                                        onclick="event.stopPropagation();"
-                                       placeholder="ej: 15+5, 12-4" step="0.1">
+                                       placeholder="ej: 0.75, 15+0.5">
                                 <div class="btn-group btn-group-sm">
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', +0.1)">+0.1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', -0.1)">-0.1</button>
@@ -507,36 +529,12 @@ function renderItems(locationName) {
         itemsList.appendChild(itemDiv);
     });
     
-    // Inicializar sortable después de renderizar todos los items
     if (!location.locked) {
         setTimeout(() => {
             initSortable();
         }, 100);
     }
 }
-
-// Update item order after drag and drop
-function updateItemOrder() {
-    const items = document.querySelectorAll('#itemsList .item-row');
-    const newOrder = Array.from(items).map(item => parseInt(item.getAttribute('data-index')));
-    
-    if (currentLocation) {
-        locations[currentLocation].order = newOrder;
-        saveData();
-        
-        // Actualizar índices de elementos seleccionados si es necesario
-        const updatedSelectedItems = new Set();
-        selectedItems.forEach(oldIndex => {
-            const newPosition = newOrder.indexOf(oldIndex);
-            if (newPosition !== -1) {
-                updatedSelectedItems.add(oldIndex);
-            }
-        });
-        selectedItems = updatedSelectedItems;
-        updateSelectionUI();
-    }
-}
-
 
 // Function to filter items based on selected family and search term
 function filterItems() {
@@ -560,7 +558,7 @@ function filterItems() {
     });
 }
 
-// NUEVA: Función para alternar selección de items
+// Función para alternar selección de items
 function toggleItemSelection(itemIndex, itemElement) {
     if (selectedItems.has(itemIndex)) {
         selectedItems.delete(itemIndex);
@@ -576,9 +574,7 @@ function toggleItemSelection(itemIndex, itemElement) {
     console.log('Items actualmente seleccionados:', Array.from(selectedItems));
 }
 
-
-
-// NUEVA: Actualizar interfaz de selección
+// Actualizar interfaz de selección
 function updateSelectionUI() {
     const selectionControls = document.querySelector('.selection-controls');
     const selectionCounter = document.getElementById('selectionCounter');
@@ -599,7 +595,7 @@ function updateSelectionUI() {
     }
 }
 
-// NUEVA: Seleccionar todos los items visibles
+// Seleccionar todos los items visibles
 function selectAllItems() {
     const visibleItems = document.querySelectorAll('#itemsList .item-row:not([style*="display: none"])');
     
@@ -613,7 +609,7 @@ function selectAllItems() {
     console.log(`${selectedItems.size} items seleccionados`);
 }
 
-// NUEVA: Limpiar selección
+// Limpiar selección
 function clearSelection() {
     selectedItems.clear();
     
@@ -630,7 +626,6 @@ function clearSelection() {
 function initSortable() {
     const itemsList = document.getElementById('itemsList');
     if (itemsList && !locations[currentLocation]?.locked) {
-        // Destruir sortable existente si existe
         if (itemsList.sortableInstance) {
             itemsList.sortableInstance.destroy();
         }
@@ -641,12 +636,10 @@ function initSortable() {
             chosenClass: 'sortable-chosen',
             dragClass: 'sortable-drag',
             
-            // Configuración básica de drag
             handle: '.drag-handle',
             filter: '.locked, input, button, .btn',
             preventOnFilter: false,
             
-            // Configuración para dispositivos móviles
             delay: 100,
             delayOnTouchOnly: true,
             touchStartThreshold: 5,
@@ -657,13 +650,11 @@ function initSortable() {
                 
                 const draggedIndex = parseInt(evt.item.getAttribute('data-index'));
                 
-                // Si el elemento arrastrado no está seleccionado, limpiar selección previa y seleccionarlo
                 if (!selectedItems.has(draggedIndex)) {
                     clearSelection();
                     toggleItemSelection(draggedIndex, evt.item);
                 }
                 
-                // Marcar todos los items seleccionados visualmente
                 selectedItems.forEach(index => {
                     const element = document.querySelector(`[data-index="${index}"]`);
                     if (element) {
@@ -678,21 +669,17 @@ function initSortable() {
             onEnd: function(evt) {
                 console.log('Finalizando drag');
                 
-                // Limpiar estilos visuales
                 document.querySelectorAll('.sortable-chosen, .sortable-drag').forEach(el => {
                     el.classList.remove('sortable-chosen', 'sortable-drag');
                     el.style.opacity = '';
                 });
                 
-                // Si hay múltiples items seleccionados, moverlos todos juntos
                 if (selectedItems.size > 1) {
                     moveMultipleItems(evt);
                 } else {
-                    // Movimiento simple
                     updateItemOrder();
                 }
                 
-                // Mantener la selección después del drag
                 setTimeout(() => {
                     selectedItems.forEach(index => {
                         const element = document.querySelector(`[data-index="${index}"]`);
@@ -709,23 +696,86 @@ function initSortable() {
     }
 }
 
+// Nueva función para mover múltiples items
+function moveMultipleItems(evt) {
+    const fromIndex = evt.oldIndex;
+    const toIndex = evt.newIndex;
+    
+    if (fromIndex === toIndex) {
+        return;
+    }
+    
+    const currentOrder = [...locations[currentLocation].order];
+    const selectedIndices = Array.from(selectedItems).sort((a, b) => {
+        const posA = currentOrder.indexOf(a);
+        const posB = currentOrder.indexOf(b);
+        return posA - posB;
+    });
+    
+    const itemsToMove = [];
+    selectedIndices.reverse().forEach(index => {
+        const position = currentOrder.indexOf(index);
+        if (position !== -1) {
+            itemsToMove.unshift(currentOrder.splice(position, 1)[0]);
+        }
+    });
+    
+    let insertPosition = toIndex;
+    
+    selectedIndices.forEach(index => {
+        const originalPos = locations[currentLocation].order.indexOf(index);
+        if (originalPos < evt.oldIndex) {
+            insertPosition--;
+        }
+    });
+    
+    currentOrder.splice(insertPosition, 0, ...itemsToMove);
+    
+    locations[currentLocation].order = currentOrder;
+    saveData();
+    
+    renderItems(currentLocation);
+    
+    console.log('Múltiples items movidos a posición:', insertPosition);
+}
+
+// Update item order after drag and drop
+function updateItemOrder() {
+    const items = document.querySelectorAll('#itemsList .item-row');
+    const newOrder = Array.from(items).map(item => parseInt(item.getAttribute('data-index')));
+    
+    if (currentLocation) {
+        locations[currentLocation].order = newOrder;
+        saveData();
+        
+        const updatedSelectedItems = new Set();
+        selectedItems.forEach(oldIndex => {
+            const newPosition = newOrder.indexOf(oldIndex);
+            if (newPosition !== -1) {
+                updatedSelectedItems.add(oldIndex);
+            }
+        });
+        selectedItems = updatedSelectedItems;
+        updateSelectionUI();
+    }
+}
+
 // Toggle lock for current location
 function toggleLock() {
     const lockSwitch = document.getElementById('lockSwitch');
     if (currentLocation) {
         locations[currentLocation].locked = lockSwitch.checked;
         
-        // Limpiar selección cuando se bloquea
         if (lockSwitch.checked) {
             clearSelection();
         }
         
         saveData();
-        showLocation(currentLocation); // Refresh to apply lock state
+        showLocation(currentLocation);
     }
 }
 
-// CORREGIDA: Update quantity con redondeo y soporte para operaciones matemáticas
+// FUNCIÓN MEJORADA: Update quantity con mejor soporte para decimales
 function updateQuantity(itemIndex, field, value) {
     if (currentLocation) {
         if (!locations[currentLocation].quantities[itemIndex]) {
@@ -739,33 +789,31 @@ function updateQuantity(itemIndex, field, value) {
             const calculatedValue = evaluateMathExpression(value);
             
             if (!isNaN(calculatedValue)) {
-                finalValue = Math.max(0, calculatedValue); // No permitir valores negativos
+                finalValue = Math.max(0, calculatedValue);
             } else {
-                // Si la evaluación falla, mantener el valor anterior o usar 0
                 finalValue = locations[currentLocation].quantities[itemIndex][field] || 0;
-                
-                // Mostrar mensaje de error brevemente
                 showMathError(itemIndex, field);
                 return;
             }
         } else {
-            finalValue = Math.max(0, parseFloat(value) || 0);
+            const parsedValue = parseFloat(value);
+            finalValue = isNaN(parsedValue) ? 0 : Math.max(0, parsedValue);
         }
         
-        const roundedValue = roundToDecimals(finalValue, 1);
+        const roundedValue = roundToDecimals(finalValue, 2);
         locations[currentLocation].quantities[itemIndex][field] = roundedValue;
         
-        // Actualizar el input con el resultado calculado
         const input = document.querySelector(`[data-index="${itemIndex}"] input[onchange*="${field}"]`);
-        if (input) {
-            input.value = roundedValue;
+        if (input && input.value !== roundedValue.toString()) {
+            input.value = formatNumber(roundedValue);
         }
         
         saveData();
+        console.log(`Quantity updated: ${field} = ${roundedValue}`);
     }
 }
 
-// CORREGIDA: Adjust quantity with buttons con redondeo
+// FUNCIÓN MEJORADA: Adjust quantity con incrementos decimales
 function adjustQuantity(itemIndex, field, adjustment) {
     if (currentLocation) {
         if (!locations[currentLocation].quantities[itemIndex]) {
@@ -774,20 +822,20 @@ function adjustQuantity(itemIndex, field, adjustment) {
         
         const currentValue = locations[currentLocation].quantities[itemIndex][field] || 0;
         const newValue = Math.max(0, currentValue + adjustment);
-        const roundedValue = roundToDecimals(newValue, 1);
+        const roundedValue = roundToDecimals(newValue, 2);
         locations[currentLocation].quantities[itemIndex][field] = roundedValue;
         
-        // Update the input field
         const input = document.querySelector(`[data-index="${itemIndex}"] input[onchange*="${field}"]`);
         if (input) {
-            input.value = roundedValue;
+            input.value = formatNumber(roundedValue);
         }
         
         saveData();
+        console.log(`Quantity adjusted: ${field} = ${roundedValue}`);
     }
 }
 
-// NUEVA: Crear botón flotante para scroll to top
+// Crear botón flotante para scroll to top
 function createScrollToTopButton() {
     const scrollButton = document.createElement('button');
     scrollButton.id = 'scrollToTopBtn';
@@ -814,7 +862,6 @@ function createScrollToTopButton() {
     
     document.body.appendChild(scrollButton);
     
-    // Show/hide button based on scroll position
     window.addEventListener('scroll', function() {
         if (window.pageYOffset > 300) {
             scrollButton.style.display = 'block';
@@ -850,7 +897,6 @@ function saveLocationSettings() {
         return;
     }
     
-    // Rename location if needed
     if (newName !== currentLocationSettings) {
         locations[newName] = locations[currentLocationSettings];
         delete locations[currentLocationSettings];
@@ -963,13 +1009,11 @@ function hideTotalization() {
 function calculateTotals() {
     const totals = {};
     
-    // Aggregate quantities from all locations
     Object.values(locations).forEach(location => {
         Object.entries(location.quantities).forEach(([itemIndex, quantities]) => {
             const item = inventory[itemIndex];
             if (!item) return;
             
-            // Use StorageLocation + Item as the unique key
             const key = `${item.storageLocation}|${item.item}`;
             
             if (!totals[key]) {
@@ -991,7 +1035,6 @@ function calculateTotals() {
         });
     });
     
-    // Filter items with quantities > 0
     const filteredTotals = Object.values(totals).filter(item => 
         item.qty > 0 || item.qty2 > 0 || item.qty3 > 0
     );
@@ -1015,7 +1058,6 @@ function renderTotals(totals) {
         return;
     }
     
-    // Group by storage location
     const grouped = {};
     totals.forEach(item => {
         if (!grouped[item.storageLocation]) {
@@ -1024,7 +1066,6 @@ function renderTotals(totals) {
         grouped[item.storageLocation].push(item);
     });
     
-    // Render grouped totals
     Object.entries(grouped).forEach(([storageLocation, items]) => {
         const groupDiv = document.createElement('div');
         groupDiv.className = 'mb-4';
@@ -1047,19 +1088,19 @@ function renderTotals(totals) {
                             ${item.qty > 0 ? `
                             <div class="col-4">
                                 <small class="text-muted">${item.uom}</small><br>
-                                <span class="badge bg-primary">${item.qty}</span>
+                                <span class="badge bg-primary">${formatNumber(item.qty)}</span>
                             </div>
                             ` : ''}
                             ${item.qty2 > 0 ? `
                             <div class="col-4">
                                 <small class="text-muted">${item.uom2}</small><br>
-                                <span class="badge bg-success">${item.qty2}</span>
+                                <span class="badge bg-success">${formatNumber(item.qty2)}</span>
                             </div>
                             ` : ''}
                             ${item.qty3 > 0 ? `
                             <div class="col-4">
                                 <small class="text-muted">${item.uom3}</small><br>
-                                <span class="badge bg-info">${item.qty3}</span>
+                                <span class="badge bg-info">${formatNumber(item.qty3)}</span>
                             </div>
                             ` : ''}
                         </div>
@@ -1088,13 +1129,11 @@ function filterTotals() {
 function exportTotals() {
     const totals = {};
     
-    // Aggregate quantities from all locations
     Object.values(locations).forEach(location => {
         Object.entries(location.quantities).forEach(([itemIndex, quantities]) => {
             const item = inventory[itemIndex];
             if (!item) return;
             
-            // Use StorageLocation + Item as the unique key
             const key = `${item.storageLocation}|${item.item}`;
             
             if (!totals[key]) {
@@ -1116,7 +1155,6 @@ function exportTotals() {
         });
     });
     
-    // Filter items with quantities > 0
     const filteredTotals = Object.values(totals).filter(item => 
         item.qty > 0 || item.qty2 > 0 || item.qty3 > 0
     );
@@ -1126,7 +1164,6 @@ function exportTotals() {
         return;
     }
     
-    // Generate CSV
     const headers = ['StorageLocation', 'Item', 'UofM', 'Qty', 'UofM2', 'Qty2', 'UofM3', 'Qty3'];
     let csv = headers.join(',') + '\n';
     
@@ -1182,7 +1219,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
     
-    // Show install button or notification
     const installButton = document.createElement('button');
     installButton.className = 'btn btn-success position-fixed bottom-0 end-0 m-3';
     installButton.innerHTML = '<i class="bi bi-download"></i> Instalar App';
@@ -1199,7 +1235,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
     
     document.body.appendChild(installButton);
     
-    // Auto-remove after 10 seconds
     setTimeout(() => {
         if (installButton.parentNode) {
             installButton.remove();
@@ -1207,11 +1242,10 @@ window.addEventListener('beforeinstallprompt', (e) => {
     }, 10000);
 });
 
-// Nueva función para exportar todas las ubicaciones
+// Función para exportar todas las ubicaciones
 function exportAllLocations() {
     const allData = [];
     
-    // Obtener los datos del inventario original para obtener UofM
     const itemsData = {};
     inventory.forEach(item => {
         const key = `${item.storageLocation}|${item.item}`;
@@ -1222,23 +1256,21 @@ function exportAllLocations() {
         };
     });
     
-    // Recorrer cada ubicación para obtener los datos de cada item
     Object.values(locations).forEach(location => {
         Object.entries(location.quantities).forEach(([itemIndex, quantities]) => {
             const item = inventory[itemIndex];
             if (!item) return;
             
-            // Si el item tiene alguna cantidad, agregarlo a los datos
             if (quantities.qty > 0 || quantities.qty2 > 0 || quantities.qty3 > 0) {
                 allData.push({
-                    storageLocation: location.name, // Nuevo campo de la ubicación
+                    storageLocation: location.name,
                     item: item.item,
                     uom: item.uom,
-                    qty: roundToDecimals(quantities.qty || 0, 1),
+                    qty: roundToDecimals(quantities.qty || 0, 2),
                     uom2: item.uom2,
-                    qty2: roundToDecimals(quantities.qty2 || 0, 1),
+                    qty2: roundToDecimals(quantities.qty2 || 0, 2),
                     uom3: item.uom3,
-                    qty3: roundToDecimals(quantities.qty3 || 0, 1)
+                    qty3: roundToDecimals(quantities.qty3 || 0, 2)
                 });
             }
         });
@@ -1249,7 +1281,6 @@ function exportAllLocations() {
         return;
     }
     
-    // Generar el CSV
     const headers = ['StorageLocation', 'Item', 'UofM', 'Qty', 'UofM2', 'Qty2', 'UofM3', 'Qty3'];
     let csv = headers.join(',') + '\n';
     
@@ -1270,7 +1301,7 @@ function exportAllLocations() {
     downloadCSV(csv, `inventario_ubicaciones_${new Date().toISOString().split('T')[0]}.csv`);
 }
 
-// Nueva función para limpiar las cantidades de la ubicación actual
+// Función para limpiar las cantidades de la ubicación actual
 function clearLocationQuantities() {
     if (confirm(`¿Estás seguro de que quieres limpiar todas las cantidades de la ubicación "${currentLocationSettings}"? Esta acción no se puede deshacer.`)) {
         if (currentLocationSettings && locations[currentLocationSettings]) {
@@ -1278,60 +1309,11 @@ function clearLocationQuantities() {
             saveData();
             
             if (currentLocation === currentLocationSettings) {
-                showLocation(currentLocationSettings); // Refresca la vista
+                showLocation(currentLocationSettings);
             }
             
             alert('Cantidades de ubicación limpiadas exitosamente.');
             bootstrap.Modal.getInstance(document.getElementById('locationSettingsModal')).hide();
         }
     }
-}
-
-
-function moveMultipleItems(evt) {
-    const fromIndex = evt.oldIndex;
-    const toIndex = evt.newIndex;
-    
-    if (fromIndex === toIndex) {
-        return;
-    }
-    
-    const currentOrder = [...locations[currentLocation].order];
-    const selectedIndices = Array.from(selectedItems).sort((a, b) => {
-        const posA = currentOrder.indexOf(a);
-        const posB = currentOrder.indexOf(b);
-        return posA - posB;
-    });
-    
-    // Remover items seleccionados del orden actual
-    const itemsToMove = [];
-    selectedIndices.reverse().forEach(index => {
-        const position = currentOrder.indexOf(index);
-        if (position !== -1) {
-            itemsToMove.unshift(currentOrder.splice(position, 1)[0]);
-        }
-    });
-    
-    // Calcular nueva posición ajustada
-    let insertPosition = toIndex;
-    
-    // Ajustar posición basada en items removidos antes de la posición objetivo
-    selectedIndices.forEach(index => {
-        const originalPos = locations[currentLocation].order.indexOf(index);
-        if (originalPos < evt.oldIndex) {
-            insertPosition--;
-        }
-    });
-    
-    // Insertar items en la nueva posición
-    currentOrder.splice(insertPosition, 0, ...itemsToMove);
-    
-    // Actualizar orden en la ubicación
-    locations[currentLocation].order = currentOrder;
-    saveData();
-    
-    // Re-renderizar la vista
-    renderItems(currentLocation);
-    
-    console.log('Múltiples items movidos a posición:', insertPosition);
 }

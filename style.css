@@ -47,6 +47,7 @@ input, textarea, [contenteditable] {
     padding: 20px;
 }
 
+/* Estilos mejorados para selección múltiple */
 .item-row.selected {
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
     border: 2px solid #2196f3 !important;
@@ -58,8 +59,8 @@ input, textarea, [contenteditable] {
 .item-row.selected::before {
     content: '✓';
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 8px;
+    right: 8px;
     background: #2196f3;
     color: white;
     border-radius: 50%;
@@ -88,224 +89,42 @@ input, textarea, [contenteditable] {
 .selection-controls {
     display: flex;
     align-items: center;
-    gap: 10px;
-    animation: slideIn 0.3s ease;
+    gap: 12px;
+    padding: 8px 12px;
+    background: rgba(33, 150, 243, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    animation: slideInFromTop 0.3s ease-out;
 }
 
-@keyframes slideIn {
+@keyframes slideInFromTop {
     from {
         opacity: 0;
-        transform: translateX(20px);
+        transform: translateY(-10px);
     }
     to {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateY(0);
     }
 }
 
+.selection-controls .badge {
+    font-size: 0.8em;
+    padding: 4px 8px;
+}
+
 /* Efectos hover mejorados para elementos interactivos */
-.item-row:not(.locked):hover {
+.item-row:not(.locked):not(.selected):hover {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     background: #ffffff;
     transform: translateY(-1px);
+    border-color: #007bff;
 }
 
 .item-row.selected:hover {
     background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%) !important;
     transform: translateY(-3px) !important;
     box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4) !important;
-}
-
-/* Estilos para drag and drop múltiple */
-.sortable-chosen.selected {
-    background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%) !important;
-    border-color: #4caf50 !important;
-}
-
-.sortable-ghost.selected {
-    opacity: 0.6;
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%) !important;
-    border-color: #ff9800 !important;
-}
-
-/* Mejoras para dispositivos táctiles */
-@media (hover: none) and (pointer: coarse) {
-    .item-row:not(.locked) {
-        padding: 20px 15px;
-    }
-    
-    .item-row.selected::before {
-        width: 30px;
-        height: 30px;
-        font-size: 16px;
-        top: 15px;
-        right: 15px;
-    }
-    
-    .quantity-controls button {
-        width: 40px;
-        height: 40px;
-        font-size: 14px;
-    }
-}
-
-@media (max-width: 768px) {
-    .quantity-controls {
-        flex-direction: column;
-        gap: 3px;
-    }
-    
-    .quantity-controls .btn-group {
-        width: 100%;
-    }
-    
-    .quantity-controls input {
-        width: 100%;
-        margin: 5px 0;
-    }
-    
-    .item-row {
-        padding: 10px;
-    }
-    
-    .location-tab {
-        font-size: 12px;
-        padding: 8px 10px;
-    }
-}
-
-.item-row.locked {
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-.quantity-controls {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.quantity-controls button {
-    width: 35px;
-    height: 35px;
-    padding: 0;
-    font-size: 12px;
-}
-
-.quantity-controls input {
-    width: 80px;
-    text-align: center;
-}
-
-.uom-label {
-    font-size: 12px;
-    color: #6c757d;
-    margin-bottom: 5px;
-}
-
-.drag-handle {
-    color: #6c757d;
-    cursor: move;
-}
-
-.locked .drag-handle {
-    color: #dc3545;
-}
-
-.offcanvas-header {
-    background: #007bff;
-    color: white;
-}
-
-.location-item {
-    padding: 10px;
-    border-bottom: 1px solid #dee2e6;
-    cursor: pointer;
-}
-
-.location-item:hover {
-    background: #f8f9fa;
-}
-
-.totalization-section {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 20px;
-    margin-top: 20px;
-}
-
-.total-item {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    padding: 15px;
-}
-
-/* Estilos para inputs que soportan operaciones matemáticas */
-.math-input {
-    font-family: 'Courier New', monospace;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-}
-
-.math-input:focus {
-    border-color: #28a745;
-    box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
-    background: #ffffff;
-}
-
-.math-input::placeholder {
-    font-size: 10px;
-    color: #6c757d;
-    opacity: 0.7;
-}
-
-.math-error-tooltip {
-    animation: fadeInOut 2s ease-in-out;
-}
-
-@keyframes fadeInOut {
-    0% { opacity: 0; transform: translateY(5px); }
-    20% { opacity: 1; transform: translateY(0); }
-    80% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-5px); }
-}
-
-.sortable-ghost {
-    opacity: 0.4;
-}
-
-.sortable-chosen {
-    background: #e3f2fd !important;
-}
-
-/* Agregar estos estilos al final de style.css */
-
-/* Estilos mejorados para selección múltiple */
-.item-row.selected {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
-    border: 2px solid #2196f3 !important;
-    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3) !important;
-    transform: translateY(-2px);
-    transition: all 0.3s ease;
-}
-
-.item-row.selected::before {
-    content: '✓';
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: #2196f3;
-    color: white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: bold;
-    z-index: 10;
 }
 
 /* Estilos para drag and drop múltiple */
@@ -358,50 +177,30 @@ input, textarea, [contenteditable] {
     cursor: not-allowed;
 }
 
-/* Controles de selección múltiple mejorados */
-.selection-controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 12px;
-    background: rgba(33, 150, 243, 0.1);
-    border-radius: 8px;
-    border: 1px solid rgba(33, 150, 243, 0.3);
-    animation: slideInFromTop 0.3s ease-out;
-}
-
-@keyframes slideInFromTop {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.selection-controls .badge {
-    font-size: 0.8em;
-    padding: 4px 8px;
-}
-
-/* Efectos hover mejorados */
-.item-row:not(.locked):not(.selected):hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    background: #ffffff;
-    transform: translateY(-1px);
-    border-color: #007bff;
-}
-
-.item-row.selected:hover {
-    background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%) !important;
-    transform: translateY(-3px) !important;
-    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4) !important;
-}
-
-/* Responsive para dispositivos móviles */
 @media (max-width: 768px) {
+    .quantity-controls {
+        flex-direction: column;
+        gap: 3px;
+    }
+    
+    .quantity-controls .btn-group {
+        width: 100%;
+    }
+    
+    .quantity-controls input {
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    .item-row {
+        padding: 10px;
+    }
+    
+    .location-tab {
+        font-size: 12px;
+        padding: 8px 10px;
+    }
+    
     .item-row.selected::before {
         width: 28px;
         height: 28px;
@@ -425,4 +224,228 @@ input, textarea, [contenteditable] {
         padding: 4px 8px;
         font-size: 0.8em;
     }
+}
+
+.item-row.locked {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(248, 249, 250, 0.8);
+    border-radius: 8px;
+    padding: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.quantity-controls:hover {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.quantity-controls button {
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    font-size: 12px;
+}
+
+.quantity-controls input {
+    width: 80px;
+    text-align: center;
+}
+
+.uom-label {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.offcanvas-header {
+    background: #007bff;
+    color: white;
+}
+
+.location-item {
+    padding: 10px;
+    border-bottom: 1px solid #dee2e6;
+    cursor: pointer;
+}
+
+.location-item:hover {
+    background: #f8f9fa;
+}
+
+.totalization-section {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.total-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 15px;
+}
+
+/* ESTILOS PRINCIPALES PARA INPUTS MÓVILES - NÚMEROS MÁS OSCUROS */
+.math-input, .mobile-dark-text {
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+    color: #000000 !important; /* Negro puro para máxima visibilidad */
+    font-weight: 700 !important; /* Texto muy grueso */
+    font-size: 16px !important; /* Tamaño base más grande */
+    text-align: center;
+    border: 2px solid #dee2e6;
+    transition: all 0.2s ease;
+    text-shadow: 0 0 1px rgba(0,0,0,0.5); /* Sombra para mayor contraste */
+}
+
+.math-input:focus, .mobile-dark-text:focus {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 8px rgba(40, 167, 69, 0.4) !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    outline: none;
+    font-weight: 800 !important;
+}
+
+.math-input::-webkit-input-placeholder {
+    color: #6c757d !important;
+    opacity: 0.8 !important;
+    font-size: 11px !important;
+    font-weight: 400 !important;
+}
+
+.math-input::-moz-placeholder {
+    color: #6c757d !important;
+    opacity: 0.8 !important;
+    font-size: 11px !important;
+    font-weight: 400 !important;
+}
+
+/* ESTILOS ESPECÍFICOS PARA DISPOSITIVOS MÓVILES - NÚMEROS ULTRA OSCUROS */
+@media (max-width: 768px) {
+    .math-input, .mobile-dark-text {
+        font-size: 20px !important; /* Tamaño grande para móviles */
+        font-weight: 800 !important; /* Texto extra grueso */
+        color: #000000 !important; /* Negro absoluto */
+        min-height: 50px !important; /* Altura para toques fáciles */
+        padding: 12px 16px !important;
+        border-width: 3px !important; /* Borde más grueso */
+        text-shadow: 1px 1px 1px rgba(0,0,0,0.8) !important; /* Sombra más pronunciada */
+        background: #ffffff !important; /* Fondo blanco puro */
+    }
+    
+    .math-input:focus, .mobile-dark-text:focus {
+        color: #000000 !important;
+        font-weight: 900 !important; /* Peso máximo al hacer focus */
+        border-color: #007bff !important;
+        box-shadow: 0 0 15px rgba(0, 123, 255, 0.6) !important;
+        background: #ffffff !important;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.9) !important;
+    }
+    
+    /* Placeholders más visibles en móviles */
+    .math-input::-webkit-input-placeholder {
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        color: #495057 !important;
+    }
+    
+    .math-input::-moz-placeholder {
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        color: #495057 !important;
+    }
+    
+    /* Botones más grandes y visibles en móviles */
+    .quantity-controls button {
+        width: 50px !important;
+        height: 50px !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        border-width: 2px !important;
+    }
+    
+    .quantity-controls .btn-group {
+        margin: 8px 0;
+    }
+    
+    .uom-label {
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        color: #212529 !important; /* Color muy oscuro para etiquetas */
+        margin-bottom: 10px !important;
+        text-shadow: 0 0 1px rgba(0,0,0,0.3);
+    }
+}
+
+/* Estilos para dispositivos con pantallas de alta densidad (Retina) */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .math-input, .mobile-dark-text {
+        color: #000000 !important;
+        font-weight: 800 !important;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: subpixel-antialiased;
+        text-shadow: 0.5px 0.5px 1px rgba(0,0,0,0.7);
+    }
+}
+
+/* Orientaciones específicas móviles */
+@media (max-width: 768px) and (orientation: portrait) {
+    .math-input, .mobile-dark-text {
+        font-size: 22px !important;
+        min-height: 55px !important;
+        font-weight: 900 !important;
+    }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+    .math-input, .mobile-dark-text {
+        font-size: 19px !important;
+        min-height: 48px !important;
+        font-weight: 800 !important;
+    }
+}
+
+/* Clase adicional para contraste máximo */
+.high-contrast-input {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 4px solid #333333 !important;
+    font-weight: 900 !important;
+    text-shadow: 2px 2px 2px rgba(0,0,0,0.8) !important;
+}
+
+/* Estilos para inputs que soportan operaciones matemáticas */
+.math-input::placeholder {
+    font-size: 10px;
+    color: #6c757d;
+    opacity: 0.7;
+}
+
+.math-error-tooltip {
+    animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(5px); }
+    20% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-5px); }
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+}
+
+.sortable-chosen {
+    background: #e3f2fd !important;
 }
