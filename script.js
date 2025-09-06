@@ -12,7 +12,10 @@ document.addEventListener('DOMContentLoaded', function() {
     updateLocationsList();
     updateLocationTabs();
     createScrollToTopButton();
-    preventMobileDoubleZoom();
+    
+    // Aplicar correcciones específicas para Android
+    initTouchEventsForAndroid();
+    handleTouchEvents();
     
     // Verificar que SortableJS se cargó correctamente
     if (typeof Sortable === 'undefined') {
@@ -29,6 +32,50 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.log('SW registration failed'));
     }
 });
+
+// FUNCIÓN CORREGIDA: Manejar eventos de toque para Android Samsung
+function handleTouchEvents() {
+    let lastTouchEnd = 0;
+    
+    document.addEventListener('touchend', function (event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
+    
+    // Evitar zoom por pinch solo cuando sea necesario
+    document.addEventListener('touchstart', function(event) {
+        if (event.touches.length > 1) {
+            event.preventDefault();
+        }
+    }, { passive: false });
+}
+
+// FUNCIÓN CORREGIDA: Inicializar eventos táctiles para Android Samsung
+function initTouchEventsForAndroid() {
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isSamsung = /Samsung/i.test(navigator.userAgent) || /SM-/i.test(navigator.userAgent);
+    
+    if (isAndroid) {
+        console.log('Aplicando correcciones para Android' + (isSamsung ? ' Samsung' : ''));
+        
+        // Configurar eventos de toque específicos para Android
+        document.addEventListener('touchmove', function(event) {
+            // Permitir scroll en contenedores específicos
+            const target = event.target.closest('#itemsList, .inventory-container, .offcanvas-body');
+            if (target) {
+                return; // Permitir scroll normal
+            }
+            
+            // Prevenir scroll en otros elementos si es necesario
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+    }
+}
 
 // Load data from localStorage
 function loadData() {
@@ -273,25 +320,6 @@ function renderFilters() {
     filterContainer.innerHTML = filterHTML;
 }
 
-// Función para prevenir el doble zoom en móviles
-function preventMobileDoubleZoom() {
-    let lastTouchEnd = 0;
-    
-    document.addEventListener('touchend', function (event) {
-        const now = (new Date()).getTime();
-        if (now - lastTouchEnd <= 300) {
-            event.preventDefault();
-        }
-        lastTouchEnd = now;
-    }, false);
-    
-    document.addEventListener('touchmove', function (event) {
-        if (event.scale !== 1) {
-            event.preventDefault();
-        }
-    }, { passive: false });
-}
-
 // FUNCIÓN MEJORADA: Redondear números para evitar problemas de precisión
 function roundToDecimals(num, decimals = 2) {
     return Math.round((num + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
@@ -309,31 +337,54 @@ function formatNumber(num) {
     return rounded.toString().replace(/\.?0+$/, '');
 }
 
-// FUNCIÓN NUEVA: Validar entrada de números decimales en tiempo real
+// FUNCIÓN MEJORADA: Validar entrada con soporte para operaciones matemáticas
 function validateDecimalInput(event) {
     const input = event.target;
     const value = input.value;
     
-    const validPattern = /^[0-9+\-*/().\s]*$/;
+    // Permitir números, operadores matemáticos básicos, puntos y espacios
+    const validPattern = /^[0-9+\-*/.() \s]*$/;
     
     if (!validPattern.test(value)) {
-        input.value = value.replace(/[^0-9+\-*/().\s]/g, '');
+        // Remover caracteres no válidos
+        input.value = value.replace(/[^0-9+\-*/.() \s]/g, '');
+    }
+    
+    // Mostrar preview del resultado si hay operadores
+    if (/[+\-*/]/.test(value) && value.length > 1) {
+        const result = evaluateMathExpression(value);
+        if (!isNaN(result)) {
+            input.setAttribute('title', `Resultado: ${formatNumber(result)}`);
+        } else {
+            input.setAttribute('title', 'Operación inválida');
+        }
+    } else {
+        input.removeAttribute('title');
     }
 }
 
-// Función para evaluar expresiones matemáticas de forma segura
+// FUNCIÓN MEJORADA: Evaluación de expresiones matemáticas más segura
 function evaluateMathExpression(expression) {
     try {
-        const cleanExpression = expression.replace(/[^0-9+\-*/().\s]/g, '');
+        // Limpiar la expresión y permitir operadores básicos
+        const cleanExpression = expression
+            .replace(/[^0-9+\-*/.() ]/g, '')
+            .replace(/\s+/g, '');
         
         if (!cleanExpression.trim()) {
             return NaN;
         }
         
+        // Validar que la expresión sea segura
+        if (!/^[0-9+\-*/.() ]+$/.test(cleanExpression)) {
+            return NaN;
+        }
+        
+        // Usar Function constructor de forma segura
         const result = new Function('return ' + cleanExpression)();
         
         if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
-            return result;
+            return Math.max(0, result); // No permitir valores negativos
         } else {
             return NaN;
         }
@@ -379,16 +430,17 @@ function showMathError(itemIndex, field) {
     }
 }
 
-// Manejar tecla Enter para ejecutar operaciones matemáticas inmediatamente
+// FUNCIÓN MEJORADA: Manejar Enter en inputs con preview
 function handleMathKeypress(event, itemIndex, field) {
     if (event.key === 'Enter') {
         event.preventDefault();
         const input = event.target;
         updateQuantity(itemIndex, field, input.value);
+        input.blur(); // Cerrar teclado en móviles
     }
 }
 
-// Render items for location
+// FUNCIÓN CORREGIDA: Renderizar items con mejor soporte para touch en Android
 function renderItems(locationName) {
     const location = locations[locationName];
     const itemsList = document.getElementById('itemsList');
@@ -412,25 +464,41 @@ function renderItems(locationName) {
         itemDiv.setAttribute('data-family', item.storageLocation);
         itemDiv.setAttribute('data-item', item.item.toLowerCase());
         
+        // EVENTOS TÁCTILES MEJORADOS PARA ANDROID
         if (!location.locked) {
-            itemDiv.addEventListener('click', function(e) {
-                if (e.target.closest('input, button, .btn')) {
+            // Usar eventos táctiles específicos para Android
+            itemDiv.addEventListener('touchstart', function(e) {
+                if (e.target.closest('input, button, .btn, .drag-handle')) {
                     return;
                 }
-                e.preventDefault();
                 e.stopPropagation();
-                toggleItemSelection(originalIndex, itemDiv);
-            });
+                this.touchStartTime = Date.now();
+            }, { passive: true });
             
-            itemDiv.addEventListener('mousedown', function(e) {
-                if (e.target.closest('input, button, .btn')) {
-                    e.stopPropagation();
+            itemDiv.addEventListener('touchend', function(e) {
+                if (e.target.closest('input, button, .btn, .drag-handle')) {
+                    return;
                 }
-            });
-            
-            itemDiv.addEventListener('touchstart', function(e) {
-                if (e.target.closest('input, button, .btn')) {
+                
+                const touchDuration = Date.now() - (this.touchStartTime || 0);
+                
+                // Solo activar selección si fue un tap corto (no scroll)
+                if (touchDuration < 200) {
+                    e.preventDefault();
                     e.stopPropagation();
+                    toggleItemSelection(originalIndex, itemDiv);
+                }
+            }, { passive: false });
+            
+            // Fallback para dispositivos no táctiles
+            itemDiv.addEventListener('click', function(e) {
+                if (e.target.closest('input, button, .btn, .drag-handle')) {
+                    return;
+                }
+                if (!('ontouchstart' in window)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleItemSelection(originalIndex, itemDiv);
                 }
             });
         }
@@ -453,22 +521,23 @@ function renderItems(locationName) {
                 <div class="col-md-7 col-11">
                     <div class="row">
                         ${item.uom ? `
-                        <div class="col-md-4 col-12 mb-2">
+                        <div class="col-md-4 col-12 mb-3">
                             <div class="uom-label">${item.uom}</div>
                             <div class="quantity-controls">
-                                <div class="btn-group btn-group-sm">
+                                <div class="btn-group btn-group-sm w-100">
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', -1)">-1</button>
                                 </div>
-                                <input type="number" class="form-control form-control-sm math-input mobile-dark-text" 
+                                <input type="text" 
+                                       inputmode="decimal" 
+                                       class="form-control form-control-sm math-input mobile-dark-text" 
                                        value="${displayQty}" 
-                                       step="0.01" min="0"
                                        onchange="event.stopPropagation(); updateQuantity(${originalIndex}, 'qty', this.value)" 
                                        onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty')"
                                        oninput="validateDecimalInput(event)"
-                                       onclick="event.stopPropagation();"
-                                       placeholder="ej: 0.35, 5+0.25">
-                                <div class="btn-group btn-group-sm">
+                                       onclick="event.stopPropagation(); this.select();"
+                                       placeholder="ej: 7.98, 5+2.5, 10*0.75">
+                                <div class="btn-group btn-group-sm w-100">
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', +0.1)">+0.1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', -0.1)">-0.1</button>
                                 </div>
@@ -476,22 +545,23 @@ function renderItems(locationName) {
                         </div>
                         ` : ''}
                         ${item.uom2 ? `
-                        <div class="col-md-4 col-12 mb-2">
+                        <div class="col-md-4 col-12 mb-3">
                             <div class="uom-label">${item.uom2}</div>
                             <div class="quantity-controls">
-                                <div class="btn-group btn-group-sm">
+                                <div class="btn-group btn-group-sm w-100">
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', -1)">-1</button>
                                 </div>
-                                <input type="number" class="form-control form-control-sm math-input mobile-dark-text" 
+                                <input type="text" 
+                                       inputmode="decimal" 
+                                       class="form-control form-control-sm math-input mobile-dark-text" 
                                        value="${displayQty2}" 
-                                       step="0.01" min="0"
                                        onchange="event.stopPropagation(); updateQuantity(${originalIndex}, 'qty2', this.value)" 
                                        onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty2')"
                                        oninput="validateDecimalInput(event)"
-                                       onclick="event.stopPropagation();"
-                                       placeholder="ej: 0.15, 8*0.5">
-                                <div class="btn-group btn-group-sm">
+                                       onclick="event.stopPropagation(); this.select();"
+                                       placeholder="ej: 3.25, 8/2, 15-0.5">
+                                <div class="btn-group btn-group-sm w-100">
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', +0.1)">+0.1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', -0.1)">-0.1</button>
                                 </div>
@@ -499,22 +569,23 @@ function renderItems(locationName) {
                         </div>
                         ` : ''}
                         ${item.uom3 ? `
-                        <div class="col-md-4 col-12 mb-2">
+                        <div class="col-md-4 col-12 mb-3">
                             <div class="uom-label">${item.uom3}</div>
                             <div class="quantity-controls">
-                                <div class="btn-group btn-group-sm">
+                                <div class="btn-group btn-group-sm w-100">
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', -1)">-1</button>
                                 </div>
-                                <input type="number" class="form-control form-control-sm math-input mobile-dark-text" 
+                                <input type="text" 
+                                       inputmode="decimal" 
+                                       class="form-control form-control-sm math-input mobile-dark-text" 
                                        value="${displayQty3}" 
-                                       step="0.01" min="0"
                                        onchange="event.stopPropagation(); updateQuantity(${originalIndex}, 'qty3', this.value)" 
                                        onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty3')"
                                        oninput="validateDecimalInput(event)"
-                                       onclick="event.stopPropagation();"
-                                       placeholder="ej: 0.75, 15+0.5">
-                                <div class="btn-group btn-group-sm">
+                                       onclick="event.stopPropagation(); this.select();"
+                                       placeholder="ej: 12.75, 20/4, 2.5*3">
+                                <div class="btn-group btn-group-sm w-100">
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', +0.1)">+0.1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', -0.1)">-0.1</button>
                                 </div>
@@ -674,646 +745,4 @@ function initSortable() {
                     el.style.opacity = '';
                 });
                 
-                if (selectedItems.size > 1) {
-                    moveMultipleItems(evt);
-                } else {
-                    updateItemOrder();
-                }
-                
-                setTimeout(() => {
-                    selectedItems.forEach(index => {
-                        const element = document.querySelector(`[data-index="${index}"]`);
-                        if (element) {
-                            element.classList.add('selected');
-                        }
-                    });
-                    updateSelectionUI();
-                }, 100);
-            }
-        });
-        
-        console.log('Sortable inicializado');
-    }
-}
-
-// Nueva función para mover múltiples items
-function moveMultipleItems(evt) {
-    const fromIndex = evt.oldIndex;
-    const toIndex = evt.newIndex;
-    
-    if (fromIndex === toIndex) {
-        return;
-    }
-    
-    const currentOrder = [...locations[currentLocation].order];
-    const selectedIndices = Array.from(selectedItems).sort((a, b) => {
-        const posA = currentOrder.indexOf(a);
-        const posB = currentOrder.indexOf(b);
-        return posA - posB;
-    });
-    
-    const itemsToMove = [];
-    selectedIndices.reverse().forEach(index => {
-        const position = currentOrder.indexOf(index);
-        if (position !== -1) {
-            itemsToMove.unshift(currentOrder.splice(position, 1)[0]);
-        }
-    });
-    
-    let insertPosition = toIndex;
-    
-    selectedIndices.forEach(index => {
-        const originalPos = locations[currentLocation].order.indexOf(index);
-        if (originalPos < evt.oldIndex) {
-            insertPosition--;
-        }
-    });
-    
-    currentOrder.splice(insertPosition, 0, ...itemsToMove);
-    
-    locations[currentLocation].order = currentOrder;
-    saveData();
-    
-    renderItems(currentLocation);
-    
-    console.log('Múltiples items movidos a posición:', insertPosition);
-}
-
-// Update item order after drag and drop
-function updateItemOrder() {
-    const items = document.querySelectorAll('#itemsList .item-row');
-    const newOrder = Array.from(items).map(item => parseInt(item.getAttribute('data-index')));
-    
-    if (currentLocation) {
-        locations[currentLocation].order = newOrder;
-        saveData();
-        
-        const updatedSelectedItems = new Set();
-        selectedItems.forEach(oldIndex => {
-            const newPosition = newOrder.indexOf(oldIndex);
-            if (newPosition !== -1) {
-                updatedSelectedItems.add(oldIndex);
-            }
-        });
-        selectedItems = updatedSelectedItems;
-        updateSelectionUI();
-    }
-}
-
-// Toggle lock for current location
-function toggleLock() {
-    const lockSwitch = document.getElementById('lockSwitch');
-    if (currentLocation) {
-        locations[currentLocation].locked = lockSwitch.checked;
-        
-        if (lockSwitch.checked) {
-            clearSelection();
-        }
-        
-        saveData();
-        showLocation(currentLocation);
-    }
-}
-
-// FUNCIÓN MEJORADA: Update quantity con mejor soporte para decimales
-function updateQuantity(itemIndex, field, value) {
-    if (currentLocation) {
-        if (!locations[currentLocation].quantities[itemIndex]) {
-            locations[currentLocation].quantities[itemIndex] = {};
-        }
-        
-        let finalValue;
-        
-        // Si el valor contiene operadores matemáticos, intentar evaluarlo
-        if (typeof value === 'string' && /[+\-*/]/.test(value)) {
-            const calculatedValue = evaluateMathExpression(value);
-            
-            if (!isNaN(calculatedValue)) {
-                finalValue = Math.max(0, calculatedValue);
-            } else {
-                finalValue = locations[currentLocation].quantities[itemIndex][field] || 0;
-                showMathError(itemIndex, field);
-                return;
-            }
-        } else {
-            const parsedValue = parseFloat(value);
-            finalValue = isNaN(parsedValue) ? 0 : Math.max(0, parsedValue);
-        }
-        
-        const roundedValue = roundToDecimals(finalValue, 2);
-        locations[currentLocation].quantities[itemIndex][field] = roundedValue;
-        
-        const input = document.querySelector(`[data-index="${itemIndex}"] input[onchange*="${field}"]`);
-        if (input && input.value !== roundedValue.toString()) {
-            input.value = formatNumber(roundedValue);
-        }
-        
-        saveData();
-        console.log(`Quantity updated: ${field} = ${roundedValue}`);
-    }
-}
-
-// FUNCIÓN MEJORADA: Adjust quantity con incrementos decimales
-function adjustQuantity(itemIndex, field, adjustment) {
-    if (currentLocation) {
-        if (!locations[currentLocation].quantities[itemIndex]) {
-            locations[currentLocation].quantities[itemIndex] = {};
-        }
-        
-        const currentValue = locations[currentLocation].quantities[itemIndex][field] || 0;
-        const newValue = Math.max(0, currentValue + adjustment);
-        const roundedValue = roundToDecimals(newValue, 2);
-        locations[currentLocation].quantities[itemIndex][field] = roundedValue;
-        
-        const input = document.querySelector(`[data-index="${itemIndex}"] input[onchange*="${field}"]`);
-        if (input) {
-            input.value = formatNumber(roundedValue);
-        }
-        
-        saveData();
-        console.log(`Quantity adjusted: ${field} = ${roundedValue}`);
-    }
-}
-
-// Crear botón flotante para scroll to top
-function createScrollToTopButton() {
-    const scrollButton = document.createElement('button');
-    scrollButton.id = 'scrollToTopBtn';
-    scrollButton.className = 'btn btn-primary position-fixed';
-    scrollButton.innerHTML = '<i class="bi bi-arrow-up"></i>';
-    scrollButton.style.cssText = `
-        bottom: 20px;
-        right: 20px;
-        z-index: 1050;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        display: none;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        touch-action: manipulation;
-    `;
-    
-    scrollButton.onclick = function() {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    };
-    
-    document.body.appendChild(scrollButton);
-    
-    window.addEventListener('scroll', function() {
-        if (window.pageYOffset > 300) {
-            scrollButton.style.display = 'block';
-        } else {
-            scrollButton.style.display = 'none';
-        }
-    });
-}
-
-// Show location settings modal
-function showLocationSettings(locationName) {
-    currentLocationSettings = locationName;
-    const location = locations[locationName];
-    
-    document.getElementById('locationNameInput').value = locationName;
-    document.getElementById('lockOrderSwitch').checked = location.locked;
-    
-    new bootstrap.Modal(document.getElementById('locationSettingsModal')).show();
-}
-
-// Save location settings
-function saveLocationSettings() {
-    const newName = document.getElementById('locationNameInput').value.trim();
-    const locked = document.getElementById('lockOrderSwitch').checked;
-    
-    if (!newName) {
-        alert('El nombre no puede estar vacío');
-        return;
-    }
-    
-    if (newName !== currentLocationSettings && locations[newName]) {
-        alert('Ya existe una ubicación con ese nombre');
-        return;
-    }
-    
-    if (newName !== currentLocationSettings) {
-        locations[newName] = locations[currentLocationSettings];
-        delete locations[currentLocationSettings];
-        
-        if (currentLocation === currentLocationSettings) {
-            currentLocation = newName;
-        }
-    }
-    
-    locations[newName].name = newName;
-    locations[newName].locked = locked;
-    
-    saveData();
-    updateLocationsList();
-    updateLocationTabs();
-    
-    if (currentLocation === newName) {
-        showLocation(newName);
-    }
-    
-    bootstrap.Modal.getInstance(document.getElementById('locationSettingsModal')).hide();
-}
-
-// Delete location
-function deleteLocation() {
-    if (confirm(`¿Estás seguro de eliminar la ubicación "${currentLocationSettings}"?`)) {
-        delete locations[currentLocationSettings];
-        
-        if (currentLocation === currentLocationSettings) {
-            currentLocation = null;
-            document.getElementById('inventoryContainer').innerHTML = `
-                <div class="text-center text-muted py-5">
-                    <i class="bi bi-box-seam display-1"></i>
-                    <h3>Selecciona una ubicación</h3>
-                    <p>Elige una ubicación del menú o crea una nueva.</p>
-                </div>
-            `;
-        }
-        
-        saveData();
-        updateLocationsList();
-        updateLocationTabs();
-        bootstrap.Modal.getInstance(document.getElementById('locationSettingsModal')).hide();
-    }
-}
-
-// Export location order
-function exportLocationOrder() {
-    if (currentLocationSettings) {
-        const location = locations[currentLocationSettings];
-        const orderData = {
-            locationName: currentLocationSettings,
-            order: location.order,
-            exportDate: new Date().toISOString()
-        };
-        
-        downloadJSON(orderData, `${currentLocationSettings}_order.json`);
-    }
-}
-
-// Import location order
-function importLocationOrder() {
-    const fileInput = document.getElementById('orderFile');
-    const file = fileInput.files[0];
-    
-    if (!file) {
-        alert('Por favor selecciona un archivo JSON');
-        return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const orderData = JSON.parse(e.target.result);
-            
-            if (orderData.order && Array.isArray(orderData.order)) {
-                locations[currentLocationSettings].order = orderData.order;
-                saveData();
-                
-                if (currentLocation === currentLocationSettings) {
-                    showLocation(currentLocationSettings);
-                }
-                
-                alert('Orden importado exitosamente');
-                fileInput.value = '';
-            } else {
-                alert('Archivo JSON inválido');
-            }
-        } catch (error) {
-            alert('Error al leer el archivo JSON');
-        }
-    };
-    reader.readAsText(file);
-}
-
-// Show totalization
-function showTotalization() {
-    document.getElementById('totalizationSection').style.display = 'block';
-    document.getElementById('inventoryContainer').style.display = 'none';
-    calculateTotals();
-}
-
-// Hide totalization
-function hideTotalization() {
-    document.getElementById('totalizationSection').style.display = 'none';
-    document.getElementById('inventoryContainer').style.display = 'block';
-}
-
-// Calculate totals across all locations, grouped by StorageLocation and Item
-function calculateTotals() {
-    const totals = {};
-    
-    Object.values(locations).forEach(location => {
-        Object.entries(location.quantities).forEach(([itemIndex, quantities]) => {
-            const item = inventory[itemIndex];
-            if (!item) return;
-            
-            const key = `${item.storageLocation}|${item.item}`;
-            
-            if (!totals[key]) {
-                totals[key] = {
-                    storageLocation: item.storageLocation,
-                    item: item.item,
-                    uom: item.uom,
-                    qty: 0,
-                    uom2: item.uom2,
-                    qty2: 0,
-                    uom3: item.uom3,
-                    qty3: 0
-                };
-            }
-            
-            totals[key].qty += quantities.qty || 0;
-            totals[key].qty2 += quantities.qty2 || 0;
-            totals[key].qty3 += quantities.qty3 || 0;
-        });
-    });
-    
-    const filteredTotals = Object.values(totals).filter(item => 
-        item.qty > 0 || item.qty2 > 0 || item.qty3 > 0
-    );
-    
-    renderTotals(filteredTotals);
-}
-
-// Render totals
-function renderTotals(totals) {
-    const container = document.getElementById('totalsContainer');
-    container.innerHTML = '';
-    
-    if (totals.length === 0) {
-        container.innerHTML = `
-            <div class="text-center text-muted py-5">
-                <i class="bi bi-inbox display-1"></i>
-                <h4>No hay productos con cantidades</h4>
-                <p>Carga cantidades en las ubicaciones para ver la totalización.</p>
-            </div>
-        `;
-        return;
-    }
-    
-    const grouped = {};
-    totals.forEach(item => {
-        if (!grouped[item.storageLocation]) {
-            grouped[item.storageLocation] = [];
-        }
-        grouped[item.storageLocation].push(item);
-    });
-    
-    Object.entries(grouped).forEach(([storageLocation, items]) => {
-        const groupDiv = document.createElement('div');
-        groupDiv.className = 'mb-4';
-        groupDiv.innerHTML = `
-            <h5 class="text-primary border-bottom pb-2">
-                <i class="bi bi-folder"></i> ${storageLocation}
-            </h5>
-        `;
-        
-        items.forEach(item => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'total-item';
-            itemDiv.innerHTML = `
-                <div class="row">
-                    <div class="col-md-6 col-12">
-                        <strong>${item.item}</strong>
-                    </div>
-                    <div class="col-md-6 col-12">
-                        <div class="row">
-                            ${item.qty > 0 ? `
-                            <div class="col-4">
-                                <small class="text-muted">${item.uom}</small><br>
-                                <span class="badge bg-primary">${formatNumber(item.qty)}</span>
-                            </div>
-                            ` : ''}
-                            ${item.qty2 > 0 ? `
-                            <div class="col-4">
-                                <small class="text-muted">${item.uom2}</small><br>
-                                <span class="badge bg-success">${formatNumber(item.qty2)}</span>
-                            </div>
-                            ` : ''}
-                            ${item.qty3 > 0 ? `
-                            <div class="col-4">
-                                <small class="text-muted">${item.uom3}</small><br>
-                                <span class="badge bg-info">${formatNumber(item.qty3)}</span>
-                            </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-            groupDiv.appendChild(itemDiv);
-        });
-        
-        container.appendChild(groupDiv);
-    });
-}
-
-// Filter totals based on search
-function filterTotals() {
-    const searchTerm = document.getElementById('searchTotals').value.toLowerCase();
-    const totalItems = document.querySelectorAll('.total-item');
-    
-    totalItems.forEach(item => {
-        const text = item.textContent.toLowerCase();
-        item.style.display = text.includes(searchTerm) ? 'block' : 'none';
-    });
-}
-
-// Export totals to CSV, grouped by StorageLocation and Item
-function exportTotals() {
-    const totals = {};
-    
-    Object.values(locations).forEach(location => {
-        Object.entries(location.quantities).forEach(([itemIndex, quantities]) => {
-            const item = inventory[itemIndex];
-            if (!item) return;
-            
-            const key = `${item.storageLocation}|${item.item}`;
-            
-            if (!totals[key]) {
-                totals[key] = {
-                    storageLocation: item.storageLocation,
-                    item: item.item,
-                    uom: item.uom,
-                    qty: 0,
-                    uom2: item.uom2,
-                    qty2: 0,
-                    uom3: item.uom3,
-                    qty3: 0
-                };
-            }
-            
-            totals[key].qty += quantities.qty || 0;
-            totals[key].qty2 += quantities.qty2 || 0;
-            totals[key].qty3 += quantities.qty3 || 0;
-        });
-    });
-    
-    const filteredTotals = Object.values(totals).filter(item => 
-        item.qty > 0 || item.qty2 > 0 || item.qty3 > 0
-    );
-    
-    if (filteredTotals.length === 0) {
-        alert('No hay datos para exportar');
-        return;
-    }
-    
-    const headers = ['StorageLocation', 'Item', 'UofM', 'Qty', 'UofM2', 'Qty2', 'UofM3', 'Qty3'];
-    let csv = headers.join(',') + '\n';
-    
-    filteredTotals.forEach(item => {
-        const row = [
-            item.storageLocation,
-            item.item,
-            item.uom || '',
-            item.qty || 0,
-            item.uom2 || '',
-            item.qty2 || 0,
-            item.uom3 || '',
-            item.qty3 || 0
-        ].map(field => `"${field}"`).join(',');
-        csv += row + '\n';
-    });
-    
-    downloadCSV(csv, `inventario_total_${new Date().toISOString().split('T')[0]}.csv`);
-}
-
-// Download CSV
-function downloadCSV(csv, filename) {
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', filename);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-}
-
-// Download JSON
-function downloadJSON(data, filename) {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', filename);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-}
-
-// PWA Install prompt
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    
-    const installButton = document.createElement('button');
-    installButton.className = 'btn btn-success position-fixed bottom-0 end-0 m-3';
-    installButton.innerHTML = '<i class="bi bi-download"></i> Instalar App';
-    installButton.onclick = () => {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                console.log('User accepted the install prompt');
-            }
-            deferredPrompt = null;
-            installButton.remove();
-        });
-    };
-    
-    document.body.appendChild(installButton);
-    
-    setTimeout(() => {
-        if (installButton.parentNode) {
-            installButton.remove();
-        }
-    }, 10000);
-});
-
-// Función para exportar todas las ubicaciones
-function exportAllLocations() {
-    const allData = [];
-    
-    const itemsData = {};
-    inventory.forEach(item => {
-        const key = `${item.storageLocation}|${item.item}`;
-        itemsData[key] = {
-            uom: item.uom,
-            uom2: item.uom2,
-            uom3: item.uom3
-        };
-    });
-    
-    Object.values(locations).forEach(location => {
-        Object.entries(location.quantities).forEach(([itemIndex, quantities]) => {
-            const item = inventory[itemIndex];
-            if (!item) return;
-            
-            if (quantities.qty > 0 || quantities.qty2 > 0 || quantities.qty3 > 0) {
-                allData.push({
-                    storageLocation: location.name,
-                    item: item.item,
-                    uom: item.uom,
-                    qty: roundToDecimals(quantities.qty || 0, 2),
-                    uom2: item.uom2,
-                    qty2: roundToDecimals(quantities.qty2 || 0, 2),
-                    uom3: item.uom3,
-                    qty3: roundToDecimals(quantities.qty3 || 0, 2)
-                });
-            }
-        });
-    });
-    
-    if (allData.length === 0) {
-        alert('No hay datos para exportar de las ubicaciones.');
-        return;
-    }
-    
-    const headers = ['StorageLocation', 'Item', 'UofM', 'Qty', 'UofM2', 'Qty2', 'UofM3', 'Qty3'];
-    let csv = headers.join(',') + '\n';
-    
-    allData.forEach(row => {
-        const line = [
-            row.storageLocation,
-            row.item,
-            row.uom || '',
-            row.qty || 0,
-            row.uom2 || '',
-            row.qty2 || 0,
-            row.uom3 || '',
-            row.qty3 || 0
-        ].map(field => `"${field}"`).join(',');
-        csv += line + '\n';
-    });
-    
-    downloadCSV(csv, `inventario_ubicaciones_${new Date().toISOString().split('T')[0]}.csv`);
-}
-
-// Función para limpiar las cantidades de la ubicación actual
-function clearLocationQuantities() {
-    if (confirm(`¿Estás seguro de que quieres limpiar todas las cantidades de la ubicación "${currentLocationSettings}"? Esta acción no se puede deshacer.`)) {
-        if (currentLocationSettings && locations[currentLocationSettings]) {
-            locations[currentLocationSettings].quantities = {};
-            saveData();
-            
-            if (currentLocation === currentLocationSettings) {
-                showLocation(currentLocationSettings);
-            }
-            
-            alert('Cantidades de ubicación limpiadas exitosamente.');
-            bootstrap.Modal.getInstance(document.getElementById('locationSettingsModal')).hide();
-        }
-    }
-}
+                if (selectedItems.size >

@@ -1,12 +1,22 @@
-/* Prevención de zoom en móviles */
+/* CORRECCIONES PARA ANDROID SAMSUNG - Scroll y Touch */
 * {
-    touch-action: manipulation;
+    touch-action: pan-y pinch-zoom; /* Cambiado de manipulation para permitir scroll */
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+/* Permitir scroll en contenedores específicos */
+.inventory-container, 
+#itemsList, 
+.offcanvas-body,
+.modal-body {
+    touch-action: pan-y pinch-zoom !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Permitir selección de texto en inputs */
@@ -16,6 +26,7 @@ input, textarea, [contenteditable] {
     -moz-user-select: auto;
     -ms-user-select: auto;
     user-select: auto;
+    touch-action: manipulation;
 }
 
 .navbar-brand {
@@ -47,6 +58,336 @@ input, textarea, [contenteditable] {
     padding: 20px;
 }
 
+/* CORRECCIÓN: Evitar conflictos de touch en Samsung */
+.item-row {
+    position: relative;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 15px;
+    cursor: pointer; /* Cambiado de move a pointer para evitar conflictos */
+    transition: all 0.2s ease;
+    touch-action: pan-y; /* Permitir scroll vertical */
+}
+
+/* Área específica para drag (solo el handle) */
+.drag-handle {
+    color: #6c757d;
+    cursor: grab;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    touch-action: none; /* Solo el handle bloquea el touch */
+}
+
+.drag-handle:hover {
+    background: rgba(0, 123, 255, 0.1);
+    color: #007bff;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+    color: #0056b3;
+}
+
+.locked .drag-handle {
+    color: #dc3545;
+    cursor: not-allowed;
+}
+
+/* INPUTS MATEMÁTICOS MEJORADOS - MÁS ANCHOS Y FUNCIONALES */
+.math-input, .mobile-dark-text {
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+    color: #000000 !important; /* Negro puro para máxima visibilidad */
+    font-weight: 700 !important; /* Texto muy grueso */
+    font-size: 16px !important; /* Tamaño base más grande */
+    text-align: center;
+    border: 2px solid #dee2e6;
+    transition: all 0.2s ease;
+    text-shadow: 0 0 1px rgba(0,0,0,0.5); /* Sombra para mayor contraste */
+    min-width: 120px; /* ANCHO MÍNIMO AUMENTADO */
+    width: 100% !important; /* Usar todo el ancho disponible */
+}
+
+.math-input:focus, .mobile-dark-text:focus {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 8px rgba(40, 167, 69, 0.4) !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    outline: none;
+    font-weight: 800 !important;
+}
+
+/* PLACEHOLDERS COMO MARCA DE AGUA - MÁS SUTILES */
+.math-input::placeholder, .mobile-dark-text::placeholder {
+    color: #adb5bd !important; /* Gris claro como marca de agua */
+    opacity: 0.6 !important; /* Más transparente */
+    font-size: 10px !important; /* Tamaño pequeño */
+    font-weight: 400 !important; /* Peso normal, no grueso */
+    font-style: italic !important; /* Cursiva para diferenciarlo */
+}
+
+.math-input::-webkit-input-placeholder {
+    color: #adb5bd !important; /* Gris claro */
+    opacity: 0.6 !important;
+    font-size: 10px !important;
+    font-weight: 400 !important;
+    font-style: italic !important;
+}
+
+.math-input::-moz-placeholder {
+    color: #adb5bd !important; /* Gris claro */
+    opacity: 0.6 !important;
+    font-size: 10px !important;
+    font-weight: 400 !important;
+    font-style: italic !important;
+}
+
+/* MEJORAS PARA MÓVILES - INPUTS MÁS ANCHOS */
+@media (max-width: 768px) {
+    .math-input, .mobile-dark-text {
+        font-size: 20px !important;
+        font-weight: 800 !important;
+        color: #000000 !important;
+        min-height: 60px !important; /* Área táctil más grande */
+        padding: 12px 16px !important;
+        border-width: 3px !important;
+        text-shadow: 1px 1px 1px rgba(0,0,0,0.8) !important;
+        background: #ffffff !important;
+        min-width: 140px !important;
+        width: 100% !important;
+    }
+    
+    /* Placeholders más visibles en móviles pero aún sutiles */
+    .math-input::placeholder, .mobile-dark-text::placeholder {
+        font-size: 11px !important; /* Un poco más grande en móviles */
+        font-weight: 400 !important;
+        color: #9ca3af !important; /* Gris marca de agua */
+        opacity: 0.7 !important;
+        font-style: italic !important;
+    }
+    
+    .math-input::-webkit-input-placeholder {
+        font-size: 11px !important;
+        font-weight: 400 !important;
+        color: #9ca3af !important;
+        opacity: 0.7 !important;
+        font-style: italic !important;
+    }
+    
+    .math-input::-moz-placeholder {
+        font-size: 11px !important;
+        font-weight: 400 !important;
+        color: #9ca3af !important;
+        opacity: 0.7 !important;
+        font-style: italic !important;
+    }
+    
+    .quantity-controls {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        background: rgba(248, 249, 250, 0.8);
+        border-radius: 8px;
+        padding: 12px;
+        border: 1px solid #e9ecef;
+        width: 100%;
+    }
+    
+    .quantity-controls .btn-group {
+        width: 100%;
+        margin: 2px 0;
+    }
+    
+    .quantity-controls input {
+        width: 100% !important;
+        margin: 8px 0 !important;
+        flex: 1;
+        max-width: none !important;
+    }
+    
+    .quantity-controls .row > div {
+        min-width: 160px;
+        margin-bottom: 15px;
+    }
+    
+    .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    body {
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Botones más grandes y visibles en móviles */
+    .quantity-controls button {
+        width: 50px !important;
+        height: 50px !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        border-width: 2px !important;
+    }
+    
+    .quantity-controls .btn-group {
+        margin: 8px 0;
+    }
+    
+    .uom-label {
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        color: #212529 !important; /* Color muy oscuro para etiquetas */
+        margin-bottom: 10px !important;
+        text-shadow: 0 0 1px rgba(0,0,0,0.3);
+    }
+    
+    .item-row {
+        padding: 10px;
+    }
+    
+    .location-tab {
+        font-size: 12px;
+        padding: 8px 10px;
+    }
+    
+    .item-row.selected::before {
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+        top: 10px;
+        right: 10px;
+    }
+    
+    .drag-handle {
+        padding: 12px;
+        font-size: 18px;
+    }
+    
+    .selection-controls {
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 0.9em;
+    }
+    
+    .selection-controls .btn {
+        padding: 4px 8px;
+        font-size: 0.8em;
+    }
+}
+
+/* CORRECCIONES ESPECÍFICAS PARA SAMSUNG */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    .item-row {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+    }
+}
+
+/* Estilos para dispositivos con pantallas de alta densidad (Retina) */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .math-input, .mobile-dark-text {
+        color: #000000 !important;
+        font-weight: 800 !important;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: subpixel-antialiased;
+        text-shadow: 0.5px 0.5px 1px rgba(0,0,0,0.7);
+    }
+    
+    /* Placeholders sutiles también en Retina */
+    .math-input::placeholder, .mobile-dark-text::placeholder {
+        color: #9ca3af !important;
+        opacity: 0.6 !important;
+        font-style: italic !important;
+    }
+}
+
+/* Orientaciones específicas móviles */
+@media (max-width: 768px) and (orientation: portrait) {
+    .math-input, .mobile-dark-text {
+        font-size: 22px !important;
+        min-height: 55px !important;
+        font-weight: 900 !important;
+    }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+    .math-input, .mobile-dark-text {
+        font-size: 19px !important;
+        min-height: 48px !important;
+        font-weight: 800 !important;
+    }
+}
+
+.item-row.locked {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(248, 249, 250, 0.8);
+    border-radius: 8px;
+    padding: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.quantity-controls:hover {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.quantity-controls button {
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    font-size: 12px;
+    touch-action: manipulation;
+    pointer-events: auto;
+}
+
+.uom-label {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.offcanvas-header {
+    background: #007bff;
+    color: white;
+}
+
+.location-item {
+    padding: 10px;
+    border-bottom: 1px solid #dee2e6;
+    cursor: pointer;
+}
+
+.location-item:hover {
+    background: #f8f9fa;
+}
+
+.totalization-section {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.total-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 15px;
+}
+
 /* Estilos mejorados para selección múltiple */
 .item-row.selected {
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
@@ -54,6 +395,7 @@ input, textarea, [contenteditable] {
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3) !important;
     transform: translateY(-2px);
     transition: all 0.3s ease;
+    touch-action: pan-y; /* Permitir scroll incluso cuando está seleccionado */
 }
 
 .item-row.selected::before {
@@ -72,17 +414,6 @@ input, textarea, [contenteditable] {
     font-size: 14px;
     font-weight: bold;
     z-index: 10;
-}
-
-.item-row {
-    position: relative;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    padding: 15px;
-    cursor: move;
-    transition: all 0.2s ease;
 }
 
 /* Controles de selección múltiple */
@@ -153,266 +484,35 @@ input, textarea, [contenteditable] {
     100% { box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3); }
 }
 
-/* Mejorar handle de arrastre */
-.drag-handle {
-    color: #6c757d;
-    cursor: grab;
-    padding: 8px;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-}
-
-.drag-handle:hover {
-    background: rgba(0, 123, 255, 0.1);
-    color: #007bff;
-}
-
-.drag-handle:active {
-    cursor: grabbing;
-    color: #0056b3;
-}
-
-.locked .drag-handle {
-    color: #dc3545;
-    cursor: not-allowed;
-}
-
-@media (max-width: 768px) {
-    .quantity-controls {
-        flex-direction: column;
-        gap: 3px;
+/* Corrección para hover en dispositivos táctiles */
+@media (hover: none) and (pointer: coarse) {
+    .item-row:hover {
+        transform: none;
+        box-shadow: none;
     }
     
-    .quantity-controls .btn-group {
-        width: 100%;
-    }
-    
-    .quantity-controls input {
-        width: 100%;
-        margin: 5px 0;
-    }
-    
-    .item-row {
-        padding: 10px;
-    }
-    
-    .location-tab {
-        font-size: 12px;
-        padding: 8px 10px;
-    }
-    
-    .item-row.selected::before {
-        width: 28px;
-        height: 28px;
-        font-size: 16px;
-        top: 10px;
-        right: 10px;
-    }
-    
-    .drag-handle {
-        padding: 12px;
-        font-size: 18px;
-    }
-    
-    .selection-controls {
-        flex-wrap: wrap;
-        gap: 8px;
-        font-size: 0.9em;
-    }
-    
-    .selection-controls .btn {
-        padding: 4px 8px;
-        font-size: 0.8em;
+    .item-row:active {
+        background: #e9ecef;
+        transform: scale(0.98);
     }
 }
 
-.item-row.locked {
-    cursor: not-allowed;
-    opacity: 0.7;
+/* Área de scroll específica para listas largas */
+#itemsList {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
 }
 
-.quantity-controls {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    background: rgba(248, 249, 250, 0.8);
-    border-radius: 8px;
-    padding: 8px;
-    border: 1px solid #e9ecef;
+/* Mejoras para el offcanvas en Samsung */
+.offcanvas {
+    -webkit-overflow-scrolling: touch;
 }
 
-.quantity-controls:hover {
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.quantity-controls button {
-    width: 35px;
-    height: 35px;
-    padding: 0;
-    font-size: 12px;
-}
-
-.quantity-controls input {
-    width: 80px;
-    text-align: center;
-}
-
-.uom-label {
-    font-size: 12px;
-    color: #6c757d;
-    margin-bottom: 5px;
-}
-
-.offcanvas-header {
-    background: #007bff;
-    color: white;
-}
-
-.location-item {
-    padding: 10px;
-    border-bottom: 1px solid #dee2e6;
-    cursor: pointer;
-}
-
-.location-item:hover {
-    background: #f8f9fa;
-}
-
-.totalization-section {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 20px;
-    margin-top: 20px;
-}
-
-.total-item {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    padding: 15px;
-}
-
-/* ESTILOS PRINCIPALES PARA INPUTS MÓVILES - NÚMEROS MÁS OSCUROS */
-.math-input, .mobile-dark-text {
-    font-family: 'Courier New', monospace;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-    color: #000000 !important; /* Negro puro para máxima visibilidad */
-    font-weight: 700 !important; /* Texto muy grueso */
-    font-size: 16px !important; /* Tamaño base más grande */
-    text-align: center;
-    border: 2px solid #dee2e6;
-    transition: all 0.2s ease;
-    text-shadow: 0 0 1px rgba(0,0,0,0.5); /* Sombra para mayor contraste */
-}
-
-.math-input:focus, .mobile-dark-text:focus {
-    border-color: #28a745 !important;
-    box-shadow: 0 0 8px rgba(40, 167, 69, 0.4) !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    outline: none;
-    font-weight: 800 !important;
-}
-
-.math-input::-webkit-input-placeholder {
-    color: #6c757d !important;
-    opacity: 0.8 !important;
-    font-size: 11px !important;
-    font-weight: 400 !important;
-}
-
-.math-input::-moz-placeholder {
-    color: #6c757d !important;
-    opacity: 0.8 !important;
-    font-size: 11px !important;
-    font-weight: 400 !important;
-}
-
-/* ESTILOS ESPECÍFICOS PARA DISPOSITIVOS MÓVILES - NÚMEROS ULTRA OSCUROS */
-@media (max-width: 768px) {
-    .math-input, .mobile-dark-text {
-        font-size: 20px !important; /* Tamaño grande para móviles */
-        font-weight: 800 !important; /* Texto extra grueso */
-        color: #000000 !important; /* Negro absoluto */
-        min-height: 50px !important; /* Altura para toques fáciles */
-        padding: 12px 16px !important;
-        border-width: 3px !important; /* Borde más grueso */
-        text-shadow: 1px 1px 1px rgba(0,0,0,0.8) !important; /* Sombra más pronunciada */
-        background: #ffffff !important; /* Fondo blanco puro */
-    }
-    
-    .math-input:focus, .mobile-dark-text:focus {
-        color: #000000 !important;
-        font-weight: 900 !important; /* Peso máximo al hacer focus */
-        border-color: #007bff !important;
-        box-shadow: 0 0 15px rgba(0, 123, 255, 0.6) !important;
-        background: #ffffff !important;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.9) !important;
-    }
-    
-    /* Placeholders más visibles en móviles */
-    .math-input::-webkit-input-placeholder {
-        font-size: 13px !important;
-        font-weight: 500 !important;
-        color: #495057 !important;
-    }
-    
-    .math-input::-moz-placeholder {
-        font-size: 13px !important;
-        font-weight: 500 !important;
-        color: #495057 !important;
-    }
-    
-    /* Botones más grandes y visibles en móviles */
-    .quantity-controls button {
-        width: 50px !important;
-        height: 50px !important;
-        font-size: 16px !important;
-        font-weight: 700 !important;
-        border-width: 2px !important;
-    }
-    
-    .quantity-controls .btn-group {
-        margin: 8px 0;
-    }
-    
-    .uom-label {
-        font-size: 16px !important;
-        font-weight: 700 !important;
-        color: #212529 !important; /* Color muy oscuro para etiquetas */
-        margin-bottom: 10px !important;
-        text-shadow: 0 0 1px rgba(0,0,0,0.3);
-    }
-}
-
-/* Estilos para dispositivos con pantallas de alta densidad (Retina) */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    .math-input, .mobile-dark-text {
-        color: #000000 !important;
-        font-weight: 800 !important;
-        text-rendering: optimizeLegibility;
-        -webkit-font-smoothing: subpixel-antialiased;
-        text-shadow: 0.5px 0.5px 1px rgba(0,0,0,0.7);
-    }
-}
-
-/* Orientaciones específicas móviles */
-@media (max-width: 768px) and (orientation: portrait) {
-    .math-input, .mobile-dark-text {
-        font-size: 22px !important;
-        min-height: 55px !important;
-        font-weight: 900 !important;
-    }
-}
-
-@media (max-width: 768px) and (orientation: landscape) {
-    .math-input, .mobile-dark-text {
-        font-size: 19px !important;
-        min-height: 48px !important;
-        font-weight: 800 !important;
-    }
+.offcanvas-body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Clase adicional para contraste máximo */
@@ -425,12 +525,6 @@ input, textarea, [contenteditable] {
 }
 
 /* Estilos para inputs que soportan operaciones matemáticas */
-.math-input::placeholder {
-    font-size: 10px;
-    color: #6c757d;
-    opacity: 0.7;
-}
-
 .math-error-tooltip {
     animation: fadeInOut 2s ease-in-out;
 }
@@ -440,10 +534,6 @@ input, textarea, [contenteditable] {
     20% { opacity: 1; transform: translateY(0); }
     80% { opacity: 1; transform: translateY(0); }
     100% { opacity: 0; transform: translateY(-5px); }
-}
-
-.sortable-ghost {
-    opacity: 0.4;
 }
 
 .sortable-chosen {
