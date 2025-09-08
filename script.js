@@ -17,14 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initTouchEventsForAndroid();
     handleTouchEvents();
     
-    // Verificar que SortableJS se cargó correctamente
-    if (typeof Sortable === 'undefined') {
-        console.error('SortableJS no se cargó correctamente');
-        alert('Error: SortableJS no se pudo cargar. Verifica tu conexión a internet.');
-    } else {
-        console.log('SortableJS cargado correctamente');
-    }
-    
     // Register service worker for PWA
     if ('serviceWorker' in navigator && window.location.protocol !== 'file:'){
         navigator.serviceWorker.register('/InventarioAPP/service-worker.js')
@@ -285,9 +277,11 @@ function showLocation(locationName) {
         <div id="itemsList"></div>
     `;
     
+    // Render the filters and the items list
     renderFilters();
     renderItems(locationName);
     
+    // Initialize sortable if not locked
     if (!location.locked) {
         initSortable();
     }
@@ -320,6 +314,7 @@ function renderFilters() {
     filterContainer.innerHTML = filterHTML;
 }
 
+<<<<<<< HEAD
 // FUNCIÓN MEJORADA: Redondear números para evitar problemas de precisión
 function roundToDecimals(num, decimals = 2) {
     return Math.round((num + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
@@ -370,26 +365,63 @@ function evaluateMathExpression(expression) {
         const cleanExpression = expression
             .replace(/[^0-9+\-*/.() ]/g, '')
             .replace(/\s+/g, '');
+=======
+// NUEVA: Función para prevenir el doble zoom en móviles
+function preventMobileDoubleZoom() {
+    let lastTouchEnd = 0;
+    
+    document.addEventListener('touchend', function (event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+    
+    // También prevenir el gesto de pellizco para zoom
+    document.addEventListener('touchmove', function (event) {
+        if (event.scale !== 1) {
+            event.preventDefault();
+        }
+    }, { passive: false });
+}
+
+// FUNCIÓN CORREGIDA: Redondear números para evitar problemas de precisión
+function roundToDecimals(num, decimals = 1) {
+    return Math.round((num + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
+}
+
+// NUEVA: Función para evaluar expresiones matemáticas de forma segura
+function evaluateMathExpression(expression) {
+    try {
+        // Limpiar la expresión: solo permitir números, operadores básicos y puntos decimales
+        const cleanExpression = expression.replace(/[^0-9+\-*/().\s]/g, '');
+>>>>>>> parent of e1cd5c6 (numero oscuros para inputs y valores decimales 3.75)
         
+        // Verificar que la expresión no esté vacía después de limpiar
         if (!cleanExpression.trim()) {
             return NaN;
         }
         
+<<<<<<< HEAD
         // Validar que la expresión sea segura
         if (!/^[0-9+\-*/.() ]+$/.test(cleanExpression)) {
             return NaN;
         }
         
         // Usar Function constructor de forma segura
+=======
+        // Evaluar usando Function constructor (más seguro que eval)
+>>>>>>> parent of e1cd5c6 (numero oscuros para inputs y valores decimales 3.75)
         const result = new Function('return ' + cleanExpression)();
         
+        // Verificar que el resultado sea un número válido
         if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
             return Math.max(0, result); // No permitir valores negativos
         } else {
             return NaN;
         }
     } catch (error) {
-        console.warn('Error evaluating math expression:', error);
         return NaN;
     }
 }
@@ -397,11 +429,14 @@ function evaluateMathExpression(expression) {
 function showMathError(itemIndex, field) {
     const input = document.querySelector(`[data-index="${itemIndex}"] input[onchange*="${field}"]`);
     if (input) {
+        // Guardar el color original
         const originalBorder = input.style.border;
         
+        // Cambiar a color de error
         input.style.border = '2px solid #dc3545';
         input.style.boxShadow = '0 0 5px rgba(220, 53, 69, 0.3)';
         
+        // Crear tooltip de error
         const tooltip = document.createElement('div');
         tooltip.className = 'math-error-tooltip';
         tooltip.innerHTML = '<small>Operación inválida</small>';
@@ -420,6 +455,7 @@ function showMathError(itemIndex, field) {
         input.parentElement.style.position = 'relative';
         input.parentElement.appendChild(tooltip);
         
+        // Restaurar después de 2 segundos
         setTimeout(() => {
             input.style.border = originalBorder;
             input.style.boxShadow = '';
@@ -430,7 +466,11 @@ function showMathError(itemIndex, field) {
     }
 }
 
+<<<<<<< HEAD
 // FUNCIÓN MEJORADA: Manejar Enter en inputs con preview
+=======
+// NUEVA: Manejar tecla Enter para ejecutar operaciones matemáticas inmediatamente
+>>>>>>> parent of e1cd5c6 (numero oscuros para inputs y valores decimales 3.75)
 function handleMathKeypress(event, itemIndex, field) {
     if (event.key === 'Enter') {
         event.preventDefault();
@@ -446,11 +486,13 @@ function renderItems(locationName) {
     const itemsList = document.getElementById('itemsList');
     itemsList.innerHTML = '';
     
+    // Destruir sortable existente
     if (itemsList.sortableInstance) {
         itemsList.sortableInstance.destroy();
         itemsList.sortableInstance = null;
     }
     
+    // Sort items according to saved order
     const orderedItems = location.order.map(index => inventory[index]).filter(item => item);
     
     orderedItems.forEach((item, displayIndex) => {
@@ -464,6 +506,7 @@ function renderItems(locationName) {
         itemDiv.setAttribute('data-family', item.storageLocation);
         itemDiv.setAttribute('data-item', item.item.toLowerCase());
         
+<<<<<<< HEAD
         // EVENTOS TÁCTILES MEJORADOS PARA ANDROID
         if (!location.locked) {
             // Usar eventos táctiles específicos para Android
@@ -471,10 +514,23 @@ function renderItems(locationName) {
                 if (e.target.closest('input, button, .btn, .drag-handle')) {
                     return;
                 }
+=======
+        // Eventos mejorados para selección múltiple
+        if (!location.locked) {
+            // Evento de click para selección
+            itemDiv.addEventListener('click', function(e) {
+                // Prevenir selección si se clickeó en elementos interactivos
+                if (e.target.closest('input, button, .btn')) {
+                    return;
+                }
+                
+                e.preventDefault();
+>>>>>>> parent of e1cd5c6 (numero oscuros para inputs y valores decimales 3.75)
                 e.stopPropagation();
                 this.touchStartTime = Date.now();
             }, { passive: true });
             
+<<<<<<< HEAD
             itemDiv.addEventListener('touchend', function(e) {
                 if (e.target.closest('input, button, .btn, .drag-handle')) {
                     return;
@@ -485,6 +541,18 @@ function renderItems(locationName) {
                 // Solo activar selección si fue un tap corto (no scroll)
                 if (touchDuration < 200) {
                     e.preventDefault();
+=======
+            // Prevenir interferencia con drag en elementos interactivos
+            itemDiv.addEventListener('mousedown', function(e) {
+                if (e.target.closest('input, button, .btn')) {
+                    e.stopPropagation();
+                }
+            });
+            
+            // Eventos táctiles para dispositivos móviles
+            itemDiv.addEventListener('touchstart', function(e) {
+                if (e.target.closest('input, button, .btn')) {
+>>>>>>> parent of e1cd5c6 (numero oscuros para inputs y valores decimales 3.75)
                     e.stopPropagation();
                     toggleItemSelection(originalIndex, itemDiv);
                 }
@@ -503,10 +571,11 @@ function renderItems(locationName) {
             });
         }
         
+        // Mostrar datos del CSV si no hay cantidades guardadas
         const savedQuantities = location.quantities[originalIndex] || {};
-        const displayQty = savedQuantities.qty !== undefined ? formatNumber(savedQuantities.qty) : formatNumber(item.qty || 0);
-        const displayQty2 = savedQuantities.qty2 !== undefined ? formatNumber(savedQuantities.qty2) : formatNumber(item.qty2 || 0);
-        const displayQty3 = savedQuantities.qty3 !== undefined ? formatNumber(savedQuantities.qty3) : formatNumber(item.qty3 || 0);
+        const displayQty = savedQuantities.qty !== undefined ? savedQuantities.qty : (item.qty || 0);
+        const displayQty2 = savedQuantities.qty2 !== undefined ? savedQuantities.qty2 : (item.qty2 || 0);
+        const displayQty3 = savedQuantities.qty3 !== undefined ? savedQuantities.qty3 : (item.qty3 || 0);
         
         itemDiv.innerHTML = `
             <div class="row align-items-center">
@@ -528,6 +597,7 @@ function renderItems(locationName) {
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', -1)">-1</button>
                                 </div>
+<<<<<<< HEAD
                                 <input type="text" 
                                        inputmode="decimal" 
                                        class="form-control form-control-sm math-input mobile-dark-text" 
@@ -538,6 +608,14 @@ function renderItems(locationName) {
                                        onclick="event.stopPropagation(); this.select();"
                                        placeholder="ej: 7.98, 5+2.5, 10*0.75">
                                 <div class="btn-group btn-group-sm w-100">
+=======
+                                <input type="text" class="form-control form-control-sm math-input" value="${displayQty}" 
+                                       onchange="event.stopPropagation(); updateQuantity(${originalIndex}, 'qty', this.value)" 
+                                       onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty')"
+                                       onclick="event.stopPropagation();"
+                                       placeholder="ej: 5+3, 10-2" step="0.1">
+                                <div class="btn-group btn-group-sm">
+>>>>>>> parent of e1cd5c6 (numero oscuros para inputs y valores decimales 3.75)
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', +0.1)">+0.1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty', -0.1)">-0.1</button>
                                 </div>
@@ -552,6 +630,7 @@ function renderItems(locationName) {
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', -1)">-1</button>
                                 </div>
+<<<<<<< HEAD
                                 <input type="text" 
                                        inputmode="decimal" 
                                        class="form-control form-control-sm math-input mobile-dark-text" 
@@ -562,6 +641,14 @@ function renderItems(locationName) {
                                        onclick="event.stopPropagation(); this.select();"
                                        placeholder="ej: 3.25, 8/2, 15-0.5">
                                 <div class="btn-group btn-group-sm w-100">
+=======
+                                <input type="text" class="form-control form-control-sm math-input" value="${displayQty2}" 
+                                       onchange="event.stopPropagation(); updateQuantity(${originalIndex}, 'qty2', this.value)" 
+                                       onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty2')"
+                                       onclick="event.stopPropagation();"
+                                       placeholder="ej: 8*2, 20/4" step="0.1">
+                                <div class="btn-group btn-group-sm">
+>>>>>>> parent of e1cd5c6 (numero oscuros para inputs y valores decimales 3.75)
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', +0.1)">+0.1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty2', -0.1)">-0.1</button>
                                 </div>
@@ -576,6 +663,7 @@ function renderItems(locationName) {
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', +1)">+1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', -1)">-1</button>
                                 </div>
+<<<<<<< HEAD
                                 <input type="text" 
                                        inputmode="decimal" 
                                        class="form-control form-control-sm math-input mobile-dark-text" 
@@ -586,6 +674,14 @@ function renderItems(locationName) {
                                        onclick="event.stopPropagation(); this.select();"
                                        placeholder="ej: 12.75, 20/4, 2.5*3">
                                 <div class="btn-group btn-group-sm w-100">
+=======
+                                <input type="text" class="form-control form-control-sm math-input" value="${displayQty3}" 
+                                       onchange="event.stopPropagation(); updateQuantity(${originalIndex}, 'qty3', this.value)" 
+                                       onkeypress="handleMathKeypress(event, ${originalIndex}, 'qty3')"
+                                       onclick="event.stopPropagation();"
+                                       placeholder="ej: 15+5, 12-4" step="0.1">
+                                <div class="btn-group btn-group-sm">
+>>>>>>> parent of e1cd5c6 (numero oscuros para inputs y valores decimales 3.75)
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', +0.1)">+0.1</button>
                                     <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); adjustQuantity(${originalIndex}, 'qty3', -0.1)">-0.1</button>
                                 </div>
@@ -600,12 +696,36 @@ function renderItems(locationName) {
         itemsList.appendChild(itemDiv);
     });
     
+    // Inicializar sortable después de renderizar todos los items
     if (!location.locked) {
         setTimeout(() => {
             initSortable();
         }, 100);
     }
 }
+
+// Update item order after drag and drop
+function updateItemOrder() {
+    const items = document.querySelectorAll('#itemsList .item-row');
+    const newOrder = Array.from(items).map(item => parseInt(item.getAttribute('data-index')));
+    
+    if (currentLocation) {
+        locations[currentLocation].order = newOrder;
+        saveData();
+        
+        // Actualizar índices de elementos seleccionados si es necesario
+        const updatedSelectedItems = new Set();
+        selectedItems.forEach(oldIndex => {
+            const newPosition = newOrder.indexOf(oldIndex);
+            if (newPosition !== -1) {
+                updatedSelectedItems.add(oldIndex);
+            }
+        });
+        selectedItems = updatedSelectedItems;
+        updateSelectionUI();
+    }
+}
+
 
 // Function to filter items based on selected family and search term
 function filterItems() {
@@ -629,7 +749,7 @@ function filterItems() {
     });
 }
 
-// Función para alternar selección de items
+// NUEVA: Función para alternar selección de items
 function toggleItemSelection(itemIndex, itemElement) {
     if (selectedItems.has(itemIndex)) {
         selectedItems.delete(itemIndex);
@@ -645,7 +765,9 @@ function toggleItemSelection(itemIndex, itemElement) {
     console.log('Items actualmente seleccionados:', Array.from(selectedItems));
 }
 
-// Actualizar interfaz de selección
+
+
+// NUEVA: Actualizar interfaz de selección
 function updateSelectionUI() {
     const selectionControls = document.querySelector('.selection-controls');
     const selectionCounter = document.getElementById('selectionCounter');
@@ -666,7 +788,7 @@ function updateSelectionUI() {
     }
 }
 
-// Seleccionar todos los items visibles
+// NUEVA: Seleccionar todos los items visibles
 function selectAllItems() {
     const visibleItems = document.querySelectorAll('#itemsList .item-row:not([style*="display: none"])');
     
@@ -680,7 +802,7 @@ function selectAllItems() {
     console.log(`${selectedItems.size} items seleccionados`);
 }
 
-// Limpiar selección
+// NUEVA: Limpiar selección
 function clearSelection() {
     selectedItems.clear();
     
@@ -697,6 +819,7 @@ function clearSelection() {
 function initSortable() {
     const itemsList = document.getElementById('itemsList');
     if (itemsList && !locations[currentLocation]?.locked) {
+        // Destruir sortable existente si existe
         if (itemsList.sortableInstance) {
             itemsList.sortableInstance.destroy();
         }
@@ -707,10 +830,12 @@ function initSortable() {
             chosenClass: 'sortable-chosen',
             dragClass: 'sortable-drag',
             
+            // Configuración básica de drag
             handle: '.drag-handle',
             filter: '.locked, input, button, .btn',
             preventOnFilter: false,
             
+            // Configuración para dispositivos móviles
             delay: 100,
             delayOnTouchOnly: true,
             touchStartThreshold: 5,
@@ -721,11 +846,13 @@ function initSortable() {
                 
                 const draggedIndex = parseInt(evt.item.getAttribute('data-index'));
                 
+                // Si el elemento arrastrado no está seleccionado, limpiar selección previa y seleccionarlo
                 if (!selectedItems.has(draggedIndex)) {
                     clearSelection();
                     toggleItemSelection(draggedIndex, evt.item);
                 }
                 
+                // Marcar todos los items seleccionados visualmente
                 selectedItems.forEach(index => {
                     const element = document.querySelector(`[data-index="${index}"]`);
                     if (element) {
@@ -740,9 +867,664 @@ function initSortable() {
             onEnd: function(evt) {
                 console.log('Finalizando drag');
                 
+                // Limpiar estilos visuales
                 document.querySelectorAll('.sortable-chosen, .sortable-drag').forEach(el => {
                     el.classList.remove('sortable-chosen', 'sortable-drag');
                     el.style.opacity = '';
                 });
                 
+<<<<<<< HEAD
                 if (selectedItems.size >
+=======
+                // Si hay múltiples items seleccionados, moverlos todos juntos
+                if (selectedItems.size > 1) {
+                    moveMultipleItems(evt);
+                } else {
+                    // Movimiento simple
+                    updateItemOrder();
+                }
+                
+                // Mantener la selección después del drag
+                setTimeout(() => {
+                    selectedItems.forEach(index => {
+                        const element = document.querySelector(`[data-index="${index}"]`);
+                        if (element) {
+                            element.classList.add('selected');
+                        }
+                    });
+                    updateSelectionUI();
+                }, 100);
+            }
+        });
+        
+        console.log('Sortable inicializado');
+    }
+}
+
+// Toggle lock for current location
+function toggleLock() {
+    const lockSwitch = document.getElementById('lockSwitch');
+    if (currentLocation) {
+        locations[currentLocation].locked = lockSwitch.checked;
+        
+        // Limpiar selección cuando se bloquea
+        if (lockSwitch.checked) {
+            clearSelection();
+        }
+        
+        saveData();
+        showLocation(currentLocation); // Refresh to apply lock state
+    }
+}
+
+// CORREGIDA: Update quantity con redondeo y soporte para operaciones matemáticas
+function updateQuantity(itemIndex, field, value) {
+    if (currentLocation) {
+        if (!locations[currentLocation].quantities[itemIndex]) {
+            locations[currentLocation].quantities[itemIndex] = {};
+        }
+        
+        let finalValue;
+        
+        // Si el valor contiene operadores matemáticos, intentar evaluarlo
+        if (typeof value === 'string' && /[+\-*/]/.test(value)) {
+            const calculatedValue = evaluateMathExpression(value);
+            
+            if (!isNaN(calculatedValue)) {
+                finalValue = Math.max(0, calculatedValue); // No permitir valores negativos
+            } else {
+                // Si la evaluación falla, mantener el valor anterior o usar 0
+                finalValue = locations[currentLocation].quantities[itemIndex][field] || 0;
+                
+                // Mostrar mensaje de error brevemente
+                showMathError(itemIndex, field);
+                return;
+            }
+        } else {
+            finalValue = Math.max(0, parseFloat(value) || 0);
+        }
+        
+        const roundedValue = roundToDecimals(finalValue, 1);
+        locations[currentLocation].quantities[itemIndex][field] = roundedValue;
+        
+        // Actualizar el input con el resultado calculado
+        const input = document.querySelector(`[data-index="${itemIndex}"] input[onchange*="${field}"]`);
+        if (input) {
+            input.value = roundedValue;
+        }
+        
+        saveData();
+    }
+}
+
+// CORREGIDA: Adjust quantity with buttons con redondeo
+function adjustQuantity(itemIndex, field, adjustment) {
+    if (currentLocation) {
+        if (!locations[currentLocation].quantities[itemIndex]) {
+            locations[currentLocation].quantities[itemIndex] = {};
+        }
+        
+        const currentValue = locations[currentLocation].quantities[itemIndex][field] || 0;
+        const newValue = Math.max(0, currentValue + adjustment);
+        const roundedValue = roundToDecimals(newValue, 1);
+        locations[currentLocation].quantities[itemIndex][field] = roundedValue;
+        
+        // Update the input field
+        const input = document.querySelector(`[data-index="${itemIndex}"] input[onchange*="${field}"]`);
+        if (input) {
+            input.value = roundedValue;
+        }
+        
+        saveData();
+    }
+}
+
+// NUEVA: Crear botón flotante para scroll to top
+function createScrollToTopButton() {
+    const scrollButton = document.createElement('button');
+    scrollButton.id = 'scrollToTopBtn';
+    scrollButton.className = 'btn btn-primary position-fixed';
+    scrollButton.innerHTML = '<i class="bi bi-arrow-up"></i>';
+    scrollButton.style.cssText = `
+        bottom: 20px;
+        right: 20px;
+        z-index: 1050;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        touch-action: manipulation;
+    `;
+    
+    scrollButton.onclick = function() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    };
+    
+    document.body.appendChild(scrollButton);
+    
+    // Show/hide button based on scroll position
+    window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+            scrollButton.style.display = 'block';
+        } else {
+            scrollButton.style.display = 'none';
+        }
+    });
+}
+
+// Show location settings modal
+function showLocationSettings(locationName) {
+    currentLocationSettings = locationName;
+    const location = locations[locationName];
+    
+    document.getElementById('locationNameInput').value = locationName;
+    document.getElementById('lockOrderSwitch').checked = location.locked;
+    
+    new bootstrap.Modal(document.getElementById('locationSettingsModal')).show();
+}
+
+// Save location settings
+function saveLocationSettings() {
+    const newName = document.getElementById('locationNameInput').value.trim();
+    const locked = document.getElementById('lockOrderSwitch').checked;
+    
+    if (!newName) {
+        alert('El nombre no puede estar vacío');
+        return;
+    }
+    
+    if (newName !== currentLocationSettings && locations[newName]) {
+        alert('Ya existe una ubicación con ese nombre');
+        return;
+    }
+    
+    // Rename location if needed
+    if (newName !== currentLocationSettings) {
+        locations[newName] = locations[currentLocationSettings];
+        delete locations[currentLocationSettings];
+        
+        if (currentLocation === currentLocationSettings) {
+            currentLocation = newName;
+        }
+    }
+    
+    locations[newName].name = newName;
+    locations[newName].locked = locked;
+    
+    saveData();
+    updateLocationsList();
+    updateLocationTabs();
+    
+    if (currentLocation === newName) {
+        showLocation(newName);
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('locationSettingsModal')).hide();
+}
+
+// Delete location
+function deleteLocation() {
+    if (confirm(`¿Estás seguro de eliminar la ubicación "${currentLocationSettings}"?`)) {
+        delete locations[currentLocationSettings];
+        
+        if (currentLocation === currentLocationSettings) {
+            currentLocation = null;
+            document.getElementById('inventoryContainer').innerHTML = `
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-box-seam display-1"></i>
+                    <h3>Selecciona una ubicación</h3>
+                    <p>Elige una ubicación del menú o crea una nueva.</p>
+                </div>
+            `;
+        }
+        
+        saveData();
+        updateLocationsList();
+        updateLocationTabs();
+        bootstrap.Modal.getInstance(document.getElementById('locationSettingsModal')).hide();
+    }
+}
+
+// Export location order
+function exportLocationOrder() {
+    if (currentLocationSettings) {
+        const location = locations[currentLocationSettings];
+        const orderData = {
+            locationName: currentLocationSettings,
+            order: location.order,
+            exportDate: new Date().toISOString()
+        };
+        
+        downloadJSON(orderData, `${currentLocationSettings}_order.json`);
+    }
+}
+
+// Import location order
+function importLocationOrder() {
+    const fileInput = document.getElementById('orderFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Por favor selecciona un archivo JSON');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const orderData = JSON.parse(e.target.result);
+            
+            if (orderData.order && Array.isArray(orderData.order)) {
+                locations[currentLocationSettings].order = orderData.order;
+                saveData();
+                
+                if (currentLocation === currentLocationSettings) {
+                    showLocation(currentLocationSettings);
+                }
+                
+                alert('Orden importado exitosamente');
+                fileInput.value = '';
+            } else {
+                alert('Archivo JSON inválido');
+            }
+        } catch (error) {
+            alert('Error al leer el archivo JSON');
+        }
+    };
+    reader.readAsText(file);
+}
+
+// Show totalization
+function showTotalization() {
+    document.getElementById('totalizationSection').style.display = 'block';
+    document.getElementById('inventoryContainer').style.display = 'none';
+    calculateTotals();
+}
+
+// Hide totalization
+function hideTotalization() {
+    document.getElementById('totalizationSection').style.display = 'none';
+    document.getElementById('inventoryContainer').style.display = 'block';
+}
+
+// Calculate totals across all locations, grouped by StorageLocation and Item
+function calculateTotals() {
+    const totals = {};
+    
+    // Aggregate quantities from all locations
+    Object.values(locations).forEach(location => {
+        Object.entries(location.quantities).forEach(([itemIndex, quantities]) => {
+            const item = inventory[itemIndex];
+            if (!item) return;
+            
+            // Use StorageLocation + Item as the unique key
+            const key = `${item.storageLocation}|${item.item}`;
+            
+            if (!totals[key]) {
+                totals[key] = {
+                    storageLocation: item.storageLocation,
+                    item: item.item,
+                    uom: item.uom,
+                    qty: 0,
+                    uom2: item.uom2,
+                    qty2: 0,
+                    uom3: item.uom3,
+                    qty3: 0
+                };
+            }
+            
+            totals[key].qty += quantities.qty || 0;
+            totals[key].qty2 += quantities.qty2 || 0;
+            totals[key].qty3 += quantities.qty3 || 0;
+        });
+    });
+    
+    // Filter items with quantities > 0
+    const filteredTotals = Object.values(totals).filter(item => 
+        item.qty > 0 || item.qty2 > 0 || item.qty3 > 0
+    );
+    
+    renderTotals(filteredTotals);
+}
+
+// Render totals
+function renderTotals(totals) {
+    const container = document.getElementById('totalsContainer');
+    container.innerHTML = '';
+    
+    if (totals.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-inbox display-1"></i>
+                <h4>No hay productos con cantidades</h4>
+                <p>Carga cantidades en las ubicaciones para ver la totalización.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Group by storage location
+    const grouped = {};
+    totals.forEach(item => {
+        if (!grouped[item.storageLocation]) {
+            grouped[item.storageLocation] = [];
+        }
+        grouped[item.storageLocation].push(item);
+    });
+    
+    // Render grouped totals
+    Object.entries(grouped).forEach(([storageLocation, items]) => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'mb-4';
+        groupDiv.innerHTML = `
+            <h5 class="text-primary border-bottom pb-2">
+                <i class="bi bi-folder"></i> ${storageLocation}
+            </h5>
+        `;
+        
+        items.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'total-item';
+            itemDiv.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6 col-12">
+                        <strong>${item.item}</strong>
+                    </div>
+                    <div class="col-md-6 col-12">
+                        <div class="row">
+                            ${item.qty > 0 ? `
+                            <div class="col-4">
+                                <small class="text-muted">${item.uom}</small><br>
+                                <span class="badge bg-primary">${item.qty}</span>
+                            </div>
+                            ` : ''}
+                            ${item.qty2 > 0 ? `
+                            <div class="col-4">
+                                <small class="text-muted">${item.uom2}</small><br>
+                                <span class="badge bg-success">${item.qty2}</span>
+                            </div>
+                            ` : ''}
+                            ${item.qty3 > 0 ? `
+                            <div class="col-4">
+                                <small class="text-muted">${item.uom3}</small><br>
+                                <span class="badge bg-info">${item.qty3}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            groupDiv.appendChild(itemDiv);
+        });
+        
+        container.appendChild(groupDiv);
+    });
+}
+
+// Filter totals based on search
+function filterTotals() {
+    const searchTerm = document.getElementById('searchTotals').value.toLowerCase();
+    const totalItems = document.querySelectorAll('.total-item');
+    
+    totalItems.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(searchTerm) ? 'block' : 'none';
+    });
+}
+
+// Export totals to CSV, grouped by StorageLocation and Item
+function exportTotals() {
+    const totals = {};
+    
+    // Aggregate quantities from all locations
+    Object.values(locations).forEach(location => {
+        Object.entries(location.quantities).forEach(([itemIndex, quantities]) => {
+            const item = inventory[itemIndex];
+            if (!item) return;
+            
+            // Use StorageLocation + Item as the unique key
+            const key = `${item.storageLocation}|${item.item}`;
+            
+            if (!totals[key]) {
+                totals[key] = {
+                    storageLocation: item.storageLocation,
+                    item: item.item,
+                    uom: item.uom,
+                    qty: 0,
+                    uom2: item.uom2,
+                    qty2: 0,
+                    uom3: item.uom3,
+                    qty3: 0
+                };
+            }
+            
+            totals[key].qty += quantities.qty || 0;
+            totals[key].qty2 += quantities.qty2 || 0;
+            totals[key].qty3 += quantities.qty3 || 0;
+        });
+    });
+    
+    // Filter items with quantities > 0
+    const filteredTotals = Object.values(totals).filter(item => 
+        item.qty > 0 || item.qty2 > 0 || item.qty3 > 0
+    );
+    
+    if (filteredTotals.length === 0) {
+        alert('No hay datos para exportar');
+        return;
+    }
+    
+    // Generate CSV
+    const headers = ['StorageLocation', 'Item', 'UofM', 'Qty', 'UofM2', 'Qty2', 'UofM3', 'Qty3'];
+    let csv = headers.join(',') + '\n';
+    
+    filteredTotals.forEach(item => {
+        const row = [
+            item.storageLocation,
+            item.item,
+            item.uom || '',
+            item.qty || 0,
+            item.uom2 || '',
+            item.qty2 || 0,
+            item.uom3 || '',
+            item.qty3 || 0
+        ].map(field => `"${field}"`).join(',');
+        csv += row + '\n';
+    });
+    
+    downloadCSV(csv, `inventario_total_${new Date().toISOString().split('T')[0]}.csv`);
+}
+
+// Download CSV
+function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', filename);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// Download JSON
+function downloadJSON(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', filename);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// PWA Install prompt
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Show install button or notification
+    const installButton = document.createElement('button');
+    installButton.className = 'btn btn-success position-fixed bottom-0 end-0 m-3';
+    installButton.innerHTML = '<i class="bi bi-download"></i> Instalar App';
+    installButton.onclick = () => {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+            }
+            deferredPrompt = null;
+            installButton.remove();
+        });
+    };
+    
+    document.body.appendChild(installButton);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+        if (installButton.parentNode) {
+            installButton.remove();
+        }
+    }, 10000);
+});
+
+// Nueva función para exportar todas las ubicaciones
+function exportAllLocations() {
+    const allData = [];
+    
+    // Obtener los datos del inventario original para obtener UofM
+    const itemsData = {};
+    inventory.forEach(item => {
+        const key = `${item.storageLocation}|${item.item}`;
+        itemsData[key] = {
+            uom: item.uom,
+            uom2: item.uom2,
+            uom3: item.uom3
+        };
+    });
+    
+    // Recorrer cada ubicación para obtener los datos de cada item
+    Object.values(locations).forEach(location => {
+        Object.entries(location.quantities).forEach(([itemIndex, quantities]) => {
+            const item = inventory[itemIndex];
+            if (!item) return;
+            
+            // Si el item tiene alguna cantidad, agregarlo a los datos
+            if (quantities.qty > 0 || quantities.qty2 > 0 || quantities.qty3 > 0) {
+                allData.push({
+                    storageLocation: location.name, // Nuevo campo de la ubicación
+                    item: item.item,
+                    uom: item.uom,
+                    qty: roundToDecimals(quantities.qty || 0, 1),
+                    uom2: item.uom2,
+                    qty2: roundToDecimals(quantities.qty2 || 0, 1),
+                    uom3: item.uom3,
+                    qty3: roundToDecimals(quantities.qty3 || 0, 1)
+                });
+            }
+        });
+    });
+    
+    if (allData.length === 0) {
+        alert('No hay datos para exportar de las ubicaciones.');
+        return;
+    }
+    
+    // Generar el CSV
+    const headers = ['StorageLocation', 'Item', 'UofM', 'Qty', 'UofM2', 'Qty2', 'UofM3', 'Qty3'];
+    let csv = headers.join(',') + '\n';
+    
+    allData.forEach(row => {
+        const line = [
+            row.storageLocation,
+            row.item,
+            row.uom || '',
+            row.qty || 0,
+            row.uom2 || '',
+            row.qty2 || 0,
+            row.uom3 || '',
+            row.qty3 || 0
+        ].map(field => `"${field}"`).join(',');
+        csv += line + '\n';
+    });
+    
+    downloadCSV(csv, `inventario_ubicaciones_${new Date().toISOString().split('T')[0]}.csv`);
+}
+
+// Nueva función para limpiar las cantidades de la ubicación actual
+function clearLocationQuantities() {
+    if (confirm(`¿Estás seguro de que quieres limpiar todas las cantidades de la ubicación "${currentLocationSettings}"? Esta acción no se puede deshacer.`)) {
+        if (currentLocationSettings && locations[currentLocationSettings]) {
+            locations[currentLocationSettings].quantities = {};
+            saveData();
+            
+            if (currentLocation === currentLocationSettings) {
+                showLocation(currentLocationSettings); // Refresca la vista
+            }
+            
+            alert('Cantidades de ubicación limpiadas exitosamente.');
+            bootstrap.Modal.getInstance(document.getElementById('locationSettingsModal')).hide();
+        }
+    }
+}
+
+
+function moveMultipleItems(evt) {
+    const fromIndex = evt.oldIndex;
+    const toIndex = evt.newIndex;
+    
+    if (fromIndex === toIndex) {
+        return;
+    }
+    
+    const currentOrder = [...locations[currentLocation].order];
+    const selectedIndices = Array.from(selectedItems).sort((a, b) => {
+        const posA = currentOrder.indexOf(a);
+        const posB = currentOrder.indexOf(b);
+        return posA - posB;
+    });
+    
+    // Remover items seleccionados del orden actual
+    const itemsToMove = [];
+    selectedIndices.reverse().forEach(index => {
+        const position = currentOrder.indexOf(index);
+        if (position !== -1) {
+            itemsToMove.unshift(currentOrder.splice(position, 1)[0]);
+        }
+    });
+    
+    // Calcular nueva posición ajustada
+    let insertPosition = toIndex;
+    
+    // Ajustar posición basada en items removidos antes de la posición objetivo
+    selectedIndices.forEach(index => {
+        const originalPos = locations[currentLocation].order.indexOf(index);
+        if (originalPos < evt.oldIndex) {
+            insertPosition--;
+        }
+    });
+    
+    // Insertar items en la nueva posición
+    currentOrder.splice(insertPosition, 0, ...itemsToMove);
+    
+    // Actualizar orden en la ubicación
+    locations[currentLocation].order = currentOrder;
+    saveData();
+    
+    // Re-renderizar la vista
+    renderItems(currentLocation);
+    
+    console.log('Múltiples items movidos a posición:', insertPosition);
+}
+>>>>>>> parent of e1cd5c6 (numero oscuros para inputs y valores decimales 3.75)

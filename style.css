@@ -58,6 +58,7 @@ input, textarea, [contenteditable] {
     padding: 20px;
 }
 
+<<<<<<< HEAD
 /* CORRECCIÓN: Evitar conflictos de touch en Samsung */
 .item-row {
     position: relative;
@@ -389,6 +390,8 @@ input, textarea, [contenteditable] {
 }
 
 /* Estilos mejorados para selección múltiple */
+=======
+>>>>>>> parent of e1cd5c6 (numero oscuros para inputs y valores decimales 3.75)
 .item-row.selected {
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
     border: 2px solid #2196f3 !important;
@@ -396,6 +399,230 @@ input, textarea, [contenteditable] {
     transform: translateY(-2px);
     transition: all 0.3s ease;
     touch-action: pan-y; /* Permitir scroll incluso cuando está seleccionado */
+}
+
+.item-row.selected::before {
+    content: '✓';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #2196f3;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 10;
+}
+
+/* Controles de selección múltiple */
+.selection-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Efectos hover mejorados para elementos interactivos */
+.item-row:not(.locked):hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background: #ffffff;
+    transform: translateY(-1px);
+}
+
+.item-row.selected:hover {
+    background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4) !important;
+}
+
+/* Estilos para drag and drop múltiple */
+.sortable-chosen.selected {
+    background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%) !important;
+    border-color: #4caf50 !important;
+}
+
+.sortable-ghost.selected {
+    opacity: 0.6;
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%) !important;
+    border-color: #ff9800 !important;
+}
+
+/* Mejoras para dispositivos táctiles */
+@media (hover: none) and (pointer: coarse) {
+    .item-row:not(.locked) {
+        padding: 20px 15px;
+    }
+    
+    .item-row.selected::before {
+        width: 30px;
+        height: 30px;
+        font-size: 16px;
+        top: 15px;
+        right: 15px;
+    }
+    
+    .quantity-controls button {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .quantity-controls {
+        flex-direction: column;
+        gap: 3px;
+    }
+    
+    .quantity-controls .btn-group {
+        width: 100%;
+    }
+    
+    .quantity-controls input {
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    .item-row {
+        padding: 10px;
+    }
+    
+    .location-tab {
+        font-size: 12px;
+        padding: 8px 10px;
+    }
+}
+
+.item-row.locked {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.quantity-controls button {
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    font-size: 12px;
+}
+
+.quantity-controls input {
+    width: 80px;
+    text-align: center;
+}
+
+.uom-label {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.drag-handle {
+    color: #6c757d;
+    cursor: move;
+}
+
+.locked .drag-handle {
+    color: #dc3545;
+}
+
+.offcanvas-header {
+    background: #007bff;
+    color: white;
+}
+
+.location-item {
+    padding: 10px;
+    border-bottom: 1px solid #dee2e6;
+    cursor: pointer;
+}
+
+.location-item:hover {
+    background: #f8f9fa;
+}
+
+.totalization-section {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.total-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 15px;
+}
+
+/* Estilos para inputs que soportan operaciones matemáticas */
+.math-input {
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+}
+
+.math-input:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
+    background: #ffffff;
+}
+
+.math-input::placeholder {
+    font-size: 10px;
+    color: #6c757d;
+    opacity: 0.7;
+}
+
+.math-error-tooltip {
+    animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(5px); }
+    20% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-5px); }
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+}
+
+.sortable-chosen {
+    background: #e3f2fd !important;
+}
+
+/* Agregar estos estilos al final de style.css */
+
+/* Estilos mejorados para selección múltiple */
+.item-row.selected {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+    border: 2px solid #2196f3 !important;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3) !important;
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
 }
 
 .item-row.selected::before {
@@ -414,48 +641,6 @@ input, textarea, [contenteditable] {
     font-size: 14px;
     font-weight: bold;
     z-index: 10;
-}
-
-/* Controles de selección múltiple */
-.selection-controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 12px;
-    background: rgba(33, 150, 243, 0.1);
-    border-radius: 8px;
-    border: 1px solid rgba(33, 150, 243, 0.3);
-    animation: slideInFromTop 0.3s ease-out;
-}
-
-@keyframes slideInFromTop {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.selection-controls .badge {
-    font-size: 0.8em;
-    padding: 4px 8px;
-}
-
-/* Efectos hover mejorados para elementos interactivos */
-.item-row:not(.locked):not(.selected):hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    background: #ffffff;
-    transform: translateY(-1px);
-    border-color: #007bff;
-}
-
-.item-row.selected:hover {
-    background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%) !important;
-    transform: translateY(-3px) !important;
-    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4) !important;
 }
 
 /* Estilos para drag and drop múltiple */
@@ -484,6 +669,7 @@ input, textarea, [contenteditable] {
     100% { box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3); }
 }
 
+<<<<<<< HEAD
 /* Corrección para hover en dispositivos táctiles */
 @media (hover: none) and (pointer: coarse) {
     .item-row:hover {
@@ -538,4 +724,97 @@ input, textarea, [contenteditable] {
 
 .sortable-chosen {
     background: #e3f2fd !important;
+=======
+/* Mejorar handle de arrastre */
+.drag-handle {
+    color: #6c757d;
+    cursor: grab;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.drag-handle:hover {
+    background: rgba(0, 123, 255, 0.1);
+    color: #007bff;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+    color: #0056b3;
+}
+
+.locked .drag-handle {
+    color: #dc3545;
+    cursor: not-allowed;
+}
+
+/* Controles de selección múltiple mejorados */
+.selection-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: rgba(33, 150, 243, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    animation: slideInFromTop 0.3s ease-out;
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.selection-controls .badge {
+    font-size: 0.8em;
+    padding: 4px 8px;
+}
+
+/* Efectos hover mejorados */
+.item-row:not(.locked):not(.selected):hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background: #ffffff;
+    transform: translateY(-1px);
+    border-color: #007bff;
+}
+
+.item-row.selected:hover {
+    background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4) !important;
+}
+
+/* Responsive para dispositivos móviles */
+@media (max-width: 768px) {
+    .item-row.selected::before {
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+        top: 10px;
+        right: 10px;
+    }
+    
+    .drag-handle {
+        padding: 12px;
+        font-size: 18px;
+    }
+    
+    .selection-controls {
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 0.9em;
+    }
+    
+    .selection-controls .btn {
+        padding: 4px 8px;
+        font-size: 0.8em;
+    }
+>>>>>>> parent of e1cd5c6 (numero oscuros para inputs y valores decimales 3.75)
 }
