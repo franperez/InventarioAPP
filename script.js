@@ -82,11 +82,11 @@ function parseCSV(csv) {
                 storageLocation: values[0]?.trim() || '',
                 item: values[1]?.trim() || '',
                 uom: values[2]?.trim() || '',
-                qty: parseFloat(values[3]) || 0,
+                qty: 0,
                 uom2: values[4]?.trim() || '',
-                qty2: parseFloat(values[5]) || 0,
+                qty2: 0,
                 uom3: values[6]?.trim() || '',
-                qty3: parseFloat(values[7]) || 0
+                qty3: 0
             };
             
             // Create unique key for consolidation
@@ -288,7 +288,7 @@ function preventMobileDoubleZoom() {
 }
 
 // FUNCIÓN CORREGIDA: Redondear números para evitar problemas de precisión
-function roundToDecimals(num, decimals = 1) {
+function roundToDecimals(num, decimals = 2) {
     return Math.round((num + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
 }
 
@@ -423,9 +423,9 @@ function renderItems(locationName) {
         
         // Mostrar datos del CSV si no hay cantidades guardadas
         const savedQuantities = location.quantities[originalIndex] || {};
-        const displayQty = savedQuantities.qty !== undefined ? savedQuantities.qty : (item.qty || 0);
-        const displayQty2 = savedQuantities.qty2 !== undefined ? savedQuantities.qty2 : (item.qty2 || 0);
-        const displayQty3 = savedQuantities.qty3 !== undefined ? savedQuantities.qty3 : (item.qty3 || 0);
+        const displayQty = savedQuantities.qty !== undefined ? savedQuantities.qty : 0;
+        const displayQty2 = savedQuantities.qty2 !== undefined ? savedQuantities.qty2 : 0;
+        const displayQty3 = savedQuantities.qty3 !== undefined ? savedQuantities.qty3 : 0;
         
         itemDiv.innerHTML = `
             <div class="row align-items-center">
@@ -630,7 +630,7 @@ function clearSelection() {
 function initSortable() {
     const itemsList = document.getElementById('itemsList');
     if (itemsList && !locations[currentLocation]?.locked) {
-        // Destruir sortable existente si existe
+        // Destruir sortable existente
         if (itemsList.sortableInstance) {
             itemsList.sortableInstance.destroy();
         }
@@ -752,7 +752,7 @@ function updateQuantity(itemIndex, field, value) {
             finalValue = Math.max(0, parseFloat(value) || 0);
         }
         
-        const roundedValue = roundToDecimals(finalValue, 1);
+        const roundedValue = roundToDecimals(finalValue, 2); // CAMBIO AQUÍ: de 1 a 2
         locations[currentLocation].quantities[itemIndex][field] = roundedValue;
         
         // Actualizar el input con el resultado calculado
@@ -774,7 +774,7 @@ function adjustQuantity(itemIndex, field, adjustment) {
         
         const currentValue = locations[currentLocation].quantities[itemIndex][field] || 0;
         const newValue = Math.max(0, currentValue + adjustment);
-        const roundedValue = roundToDecimals(newValue, 1);
+        const roundedValue = roundToDecimals(newValue, 2); // CAMBIO AQUÍ: de 1 a 2
         locations[currentLocation].quantities[itemIndex][field] = roundedValue;
         
         // Update the input field
@@ -1234,11 +1234,11 @@ function exportAllLocations() {
                     storageLocation: location.name, // Nuevo campo de la ubicación
                     item: item.item,
                     uom: item.uom,
-                    qty: roundToDecimals(quantities.qty || 0, 1),
+                    qty: roundToDecimals(quantities.qty || 0, 2), // CAMBIO AQUÍ: de 1 a 2
                     uom2: item.uom2,
-                    qty2: roundToDecimals(quantities.qty2 || 0, 1),
+                    qty2: roundToDecimals(quantities.qty2 || 0, 2), // CAMBIO AQUÍ: de 1 a 2
                     uom3: item.uom3,
-                    qty3: roundToDecimals(quantities.qty3 || 0, 1)
+                    qty3: roundToDecimals(quantities.qty3 || 0, 2) // CAMBIO AQUÍ: de 1 a 2
                 });
             }
         });

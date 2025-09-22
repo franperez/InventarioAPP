@@ -1,428 +1,162 @@
-/* Prevención de zoom en móviles */
-* {
-    touch-action: manipulation;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+/* Custom styles */
+
+body {
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
-/* Permitir selección de texto en inputs */
-input, textarea, [contenteditable] {
-    -webkit-user-select: auto;
-    -khtml-user-select: auto;
-    -moz-user-select: auto;
-    -ms-user-select: auto;
-    user-select: auto;
+main {
+    padding-top: 56px; /* Adjust for fixed navbar */
 }
 
-.navbar-brand {
-    font-weight: bold;
+.offcanvas-body {
+    padding: 0;
+}
+
+.nav-link {
+    cursor: pointer;
 }
 
 .location-tab {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-bottom: none;
-    padding: 10px 15px;
-    margin-right: 5px;
     cursor: pointer;
-    border-radius: 10px 10px 0 0;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: #e9ecef;
+    border: 1px solid #dee2e6;
+    display: inline-flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
 }
 
 .location-tab.active {
-    background: white;
-    border-bottom: 1px solid white;
-    position: relative;
-    z-index: 1;
-}
-
-.inventory-container {
-    border: 1px solid #dee2e6;
-    border-top: none;
-    background: white;
-    min-height: 400px;
-    padding: 20px;
-}
-
-.item-row.selected {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
-    border: 2px solid #2196f3 !important;
-    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3) !important;
-    transform: translateY(-2px);
-    transition: all 0.3s ease;
-}
-
-.item-row.selected::before {
-    content: '✓';
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #2196f3;
+    background-color: #007bff;
     color: white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
     font-weight: bold;
-    z-index: 10;
+    border-color: #007bff;
+}
+
+.location-tab:not(.active):hover {
+    background-color: #dee2e6;
+}
+
+.location-tab button {
+    color: inherit;
+    opacity: 0.7;
+}
+
+.location-tab button:hover {
+    opacity: 1;
+}
+
+#locationTabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+#locationTabs::-webkit-scrollbar {
+    height: 8px;
+}
+
+#locationTabs::-webkit-scrollbar-thumb {
+    background-color: #adb5bd;
+    border-radius: 4px;
+}
+
+.location-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.location-item:hover {
+    background-color: #e9ecef;
 }
 
 .item-row {
-    position: relative;
-    background: #f8f9fa;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #fff;
     border: 1px solid #dee2e6;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    padding: 15px;
-    cursor: move;
-    transition: all 0.2s ease;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: grab;
 }
 
-/* Controles de selección múltiple */
-.selection-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    animation: slideIn 0.3s ease;
+.item-row.selected {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
 }
 
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+.item-row.sortable-ghost {
+    opacity: 0.2;
+    border-style: dashed;
 }
 
-/* Efectos hover mejorados para elementos interactivos */
-.item-row:not(.locked):hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    background: #ffffff;
-    transform: translateY(-1px);
-}
-
-.item-row.selected:hover {
-    background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%) !important;
-    transform: translateY(-3px) !important;
-    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4) !important;
-}
-
-/* Estilos para drag and drop múltiple */
-.sortable-chosen.selected {
-    background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%) !important;
-    border-color: #4caf50 !important;
-}
-
-.sortable-ghost.selected {
-    opacity: 0.6;
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%) !important;
-    border-color: #ff9800 !important;
-}
-
-/* Mejoras para dispositivos táctiles */
-@media (hover: none) and (pointer: coarse) {
-    .item-row:not(.locked) {
-        padding: 20px 15px;
-    }
-    
-    .item-row.selected::before {
-        width: 30px;
-        height: 30px;
-        font-size: 16px;
-        top: 15px;
-        right: 15px;
-    }
-    
-    .quantity-controls button {
-        width: 40px;
-        height: 40px;
-        font-size: 14px;
-    }
-}
-
-@media (max-width: 768px) {
-    .quantity-controls {
-        flex-direction: column;
-        gap: 3px;
-    }
-    
-    .quantity-controls .btn-group {
-        width: 100%;
-    }
-    
-    .quantity-controls input {
-        width: 100%;
-        margin: 5px 0;
-    }
-    
-    .item-row {
-        padding: 10px;
-    }
-    
-    .location-tab {
-        font-size: 12px;
-        padding: 8px 10px;
-    }
+.item-row.sortable-drag {
+    opacity: 0.7;
+    transform: scale(1.05);
 }
 
 .item-row.locked {
     cursor: not-allowed;
-    opacity: 0.7;
+    background-color: #f1f1f1;
+}
+
+.item-row.locked .drag-handle {
+    cursor: not-allowed;
 }
 
 .quantity-controls {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 0.25rem;
 }
 
-.quantity-controls button {
-    width: 35px;
-    height: 35px;
-    padding: 0;
-    font-size: 12px;
+.quantity-controls .btn-group {
+    flex-shrink: 0;
 }
 
-.quantity-controls input {
-    width: 80px;
+.quantity-controls .form-control {
+    width: 100px; /* Adjust as needed */
     text-align: center;
 }
 
 .uom-label {
-    font-size: 12px;
+    text-align: center;
+    font-size: 0.8rem;
     color: #6c757d;
-    margin-bottom: 5px;
 }
 
-.drag-handle {
-    color: #6c757d;
-    cursor: move;
-}
-
-.locked .drag-handle {
-    color: #dc3545;
-}
-
-.offcanvas-header {
-    background: #007bff;
-    color: white;
-}
-
-.location-item {
-    padding: 10px;
-    border-bottom: 1px solid #dee2e6;
-    cursor: pointer;
-}
-
-.location-item:hover {
-    background: #f8f9fa;
-}
-
-.totalization-section {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 20px;
-    margin-top: 20px;
-}
-
-.total-item {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    padding: 15px;
-}
-
-/* Estilos para inputs que soportan operaciones matemáticas */
-.math-input {
-    font-family: 'Courier New', monospace;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-}
-
-.math-input:focus {
-    border-color: #28a745;
-    box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
-    background: #ffffff;
-}
-
-.math-input::placeholder {
-    font-size: 10px;
-    color: #6c757d;
-    opacity: 0.7;
+#scrollToTopBtn {
+    display: none;
+    transition: opacity 0.3s ease;
 }
 
 .math-error-tooltip {
-    animation: fadeInOut 2s ease-in-out;
+    transition: opacity 0.5s ease-in-out;
 }
 
-@keyframes fadeInOut {
-    0% { opacity: 0; transform: translateY(5px); }
-    20% { opacity: 1; transform: translateY(0); }
-    80% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-5px); }
+.total-item {
+    padding: 0.75rem 1rem;
+    background-color: #f1f1f1;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
 }
 
-.sortable-ghost {
-    opacity: 0.4;
+.modal-header .btn-close {
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem auto;
 }
 
-.sortable-chosen {
-    background: #e3f2fd !important;
-}
-
-/* Agregar estos estilos al final de style.css */
-
-/* Estilos mejorados para selección múltiple */
-.item-row.selected {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
-    border: 2px solid #2196f3 !important;
-    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3) !important;
-    transform: translateY(-2px);
-    transition: all 0.3s ease;
-}
-
-.item-row.selected::before {
-    content: '✓';
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: #2196f3;
-    color: white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: bold;
-    z-index: 10;
-}
-
-/* Estilos para drag and drop múltiple */
-.sortable-chosen.selected {
-    background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%) !important;
-    border-color: #4caf50 !important;
-    opacity: 0.8 !important;
-}
-
-.sortable-ghost {
-    opacity: 0.4 !important;
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%) !important;
-    border: 2px dashed #ff9800 !important;
-}
-
-/* Estilos para items durante drag múltiple */
-.multi-drag-active .item-row.selected {
-    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%) !important;
-    border-color: #9c27b0 !important;
-    animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-    0% { box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3); }
-    50% { box-shadow: 0 6px 16px rgba(156, 39, 176, 0.5); }
-    100% { box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3); }
-}
-
-/* Mejorar handle de arrastre */
-.drag-handle {
-    color: #6c757d;
-    cursor: grab;
-    padding: 8px;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-}
-
-.drag-handle:hover {
-    background: rgba(0, 123, 255, 0.1);
-    color: #007bff;
-}
-
-.drag-handle:active {
-    cursor: grabbing;
-    color: #0056b3;
-}
-
-.locked .drag-handle {
-    color: #dc3545;
-    cursor: not-allowed;
-}
-
-/* Controles de selección múltiple mejorados */
-.selection-controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 12px;
-    background: rgba(33, 150, 243, 0.1);
-    border-radius: 8px;
-    border: 1px solid rgba(33, 150, 243, 0.3);
-    animation: slideInFromTop 0.3s ease-out;
-}
-
-@keyframes slideInFromTop {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.selection-controls .badge {
-    font-size: 0.8em;
-    padding: 4px 8px;
-}
-
-/* Efectos hover mejorados */
-.item-row:not(.locked):not(.selected):hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    background: #ffffff;
-    transform: translateY(-1px);
-    border-color: #007bff;
-}
-
-.item-row.selected:hover {
-    background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%) !important;
-    transform: translateY(-3px) !important;
-    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4) !important;
-}
-
-/* Responsive para dispositivos móviles */
-@media (max-width: 768px) {
-    .item-row.selected::before {
-        width: 28px;
-        height: 28px;
-        font-size: 16px;
-        top: 10px;
-        right: 10px;
-    }
-    
-    .drag-handle {
-        padding: 12px;
-        font-size: 18px;
-    }
-    
-    .selection-controls {
-        flex-wrap: wrap;
-        gap: 8px;
-        font-size: 0.9em;
-    }
-    
-    .selection-controls .btn {
-        padding: 4px 8px;
-        font-size: 0.8em;
-    }
+/* Estilo para hacer los números en los campos de cantidad más oscuros y legibles */
+.item-row input[type="text"] {
+    color: #333;
+    font-weight: 600;
 }
