@@ -277,13 +277,6 @@ function preventMobileDoubleZoom() {
             event.preventDefault();
         }
         lastTouchEnd = now;
-    }, false);
-    
-    // También prevenir el gesto de pellizco para zoom
-    document.addEventListener('touchmove', function (event) {
-        if (event.scale !== 1) {
-            event.preventDefault();
-        }
     }, { passive: false });
 }
 

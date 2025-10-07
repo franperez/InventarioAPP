@@ -1,33 +1,23 @@
 /* Custom styles */
 
-
-html,body {
-
+html {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: auto;
 }
 
-
 body {
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
     background-color: #f8f9fa;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     -webkit-overflow-scrolling: touch;
-    overflow-y: scroll;
 }
 
 .container-fluid {
     padding-bottom: 2rem;
 }
-/*main {
-    padding-top: 56px;
-    height: 100%;
-    box-sizing: border-box;
-    overflow-y: auto ;
-    -webkit-overflow-scrolling: touch;
-
-}*/
 
 .offcanvas-body {
     padding: 0;
@@ -146,11 +136,8 @@ body {
 
 .quantity-controls .form-control {
     flex-grow: 1;
-    /*width: 100px;  Adjust as needed */
     text-align: center;
-    /*max-width: none;*/
     width: 0;
-
 }
 
 .uom-label {
@@ -180,12 +167,11 @@ body {
     margin: -0.5rem -0.5rem -0.5rem auto;
 }
 
-/* Estilo para hacer los números en los campos de cantidad más oscuros y legibles */
 .item-row input[type="text"] {
     color: #333;
     font-weight: 600;
 }
 
 input[type="number"] {
-    font-size: 16px; /* 16px o más previene el zoom automático */
+    font-size: 16px;
 }
