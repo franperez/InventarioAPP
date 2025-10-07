@@ -1,4 +1,4 @@
-const CACHE_NAME = 'inventory-app-cache-v6';
+const CACHE_NAME = 'inventory-app-cache-v7';
 const urlsToCache = [
     '/InventarioAPP/',
     '/InventarioAPP/index.html',

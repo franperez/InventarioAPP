@@ -273,9 +273,16 @@ function preventMobileDoubleZoom() {
     
     document.addEventListener('touchend', function (event) {
         const now = (new Date()).getTime();
-        if (now - lastTouchEnd <= 300) {
+        const target = event.target;
+        
+        // Solo prevenir doble tap en botones e inputs específicos
+        const isInteractiveElement = target.closest('button, .btn, input[type="button"], input[type="submit"]');
+        
+        // Solo prevenir si es un elemento interactivo Y hay doble tap
+        if (isInteractiveElement && now - lastTouchEnd <= 300) {
             event.preventDefault();
         }
+        
         lastTouchEnd = now;
     }, { passive: false });
 }

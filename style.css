@@ -11,12 +11,14 @@ body {
     margin: 0;
     padding: 0;
     background-color: #f8f9fa;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    -webkit-overflow-scrolling: touch;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+    touch-action: pan-y; /* Permitir scroll vertical */
 }
 
 .container-fluid {
     padding-bottom: 2rem;
+    touch-action: pan-y; /* Permitir scroll vertical */
 }
 
 .offcanvas-body {
@@ -174,4 +176,8 @@ body {
 
 input[type="number"] {
     font-size: 16px;
+}
+
+#itemsList {
+    touch-action: pan-y; /* Permitir scroll vertical */
 }
